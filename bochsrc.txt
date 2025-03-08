@@ -1,0 +1,4 @@
+megs: 256
+ata0-slave: type=cdrom,path=fmsos.iso,status=inserted
+boot:cdrom
+display_library: x, options = "gui_debug"

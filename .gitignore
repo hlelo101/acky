@@ -1,0 +1,5 @@
+*.iso
+ct/
+.vscode
+bochhsout.log
+bx_enh_dbg.ini
