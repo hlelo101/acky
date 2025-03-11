@@ -2,6 +2,7 @@
 #include "io.h"
 #include "ps2kbd.h"
 #include "herr.h"
+#include "pit.h"
 
 gate idt[256];
 idtrDesc idtr;
@@ -143,11 +144,12 @@ void initIDT() {
     setIDTGate(1, (uint32_t)simdErr, 0x08, 0x8F);
     for(int i = 20; i<=31; i++) setIDTGate(i, (uint32_t)reservedErr, 0x08, 0x8F);
 
-    setIDTGate(0x21, (uint32_t)ps2KBDISR, 0x08, 0x8E);
+    setIDTGate(0x21, (uint32_t)ps2KBDISR, 0x08, 0x8E);  // Keyboard
+    setIDTGate(0x20, (uint32_t)PITISR, 0x08, 0x8E);  // Timer
     // Load!
     __asm__ __volatile__ ("lidtl (%0)" :: "r" (&idtr));
 
     // Enable IRQ1
-    PICMap(0x20, 0x28, 0xFD, 0xFF);
+    PICMap(0x20, 0x28, 0xFC, 0xFF);
     __asm__ __volatile__ ("sti");
 }

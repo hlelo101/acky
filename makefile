@@ -21,8 +21,9 @@ build:
 	$(CC) $(CFLAGS) fmsk/idt.c -o ct/idt.o
 	$(CC) $(CFLAGS) fmsk/ps2kbd.c -o ct/ps2kbd.o
 	$(CC) $(CFLAGS) fmsk/herr.c -o ct/herr.o
+	$(CC) $(CFLAGS) fmsk/pit.c -o ct/pit.o
 
-	$(CC) $(LDFLAGS) ct/boot.o ct/kmain.o ct/vga.o ct/io.o ct/memory.o ct/gdt.o ct/idt.o ct/ps2kbd.o ct/herr.o
+	$(CC) $(LDFLAGS) ct/boot.o ct/kmain.o ct/vga.o ct/io.o ct/memory.o ct/gdt.o ct/idt.o ct/ps2kbd.o ct/herr.o ct/pit.o
 	stat fmsos.bin
 
 mkiso:
