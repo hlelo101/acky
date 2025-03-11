@@ -29,7 +29,7 @@ _start:
 	mov cr0, ecx
 
 	jmp higherHalfMem
-_start.end
+_start.end:
 
 section .text:
 higherHalfMem:

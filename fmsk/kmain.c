@@ -24,6 +24,7 @@ void kmain(multiboot_info_t* mbd, uint32_t magic) {
     initGDT();
     initIDT();
     initMemory(systemMemoryB, (*(uint32_t*)(mbd->mods_addr + 4) + 0xFFF) & ~0xFFF);
+    initKmalloc(0x1000);
     enableCursor(9, 11);
 
     while(1);

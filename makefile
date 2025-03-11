@@ -4,7 +4,7 @@ LDFLAGS = -T linker.ld -o fmsos.bin -ffreestanding -O2 -nostdlib -lgcc
 AS = nasm
 ASFLAGS = -felf32
 
-QEMUCMD = qemu-system-i386 -cdrom fmsos.iso -m 124 -d int
+QEMUCMD = qemu-system-i386 -cdrom fmsos.iso -m 124
 
 all: build mkiso clean
 
@@ -23,6 +23,7 @@ build:
 	$(CC) $(CFLAGS) fmsk/herr.c -o ct/herr.o
 
 	$(CC) $(LDFLAGS) ct/boot.o ct/kmain.o ct/vga.o ct/io.o ct/memory.o ct/gdt.o ct/idt.o ct/ps2kbd.o ct/herr.o
+	stat fmsos.bin
 
 mkiso:
 	mkdir -p iso/boot/grub/
