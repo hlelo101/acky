@@ -122,26 +122,26 @@ void initIDT() {
     idtr.size = sizeof(idt) - 1;
 
     // Exceptions
-    setIDTGate(1, (uint32_t)dividErr, 0x08, 0x8F);
+    setIDTGate(0, (uint32_t)dividErr, 0x08, 0x8F);
     setIDTGate(1, (uint32_t)debugErr, 0x08, 0x8F);
-    setIDTGate(1, (uint32_t)nmIntErr, 0x08, 0x8F);
-    setIDTGate(1, (uint32_t)breakErr, 0x08, 0x8F);
-    setIDTGate(1, (uint32_t)overflowErr, 0x08, 0x8F);
-    setIDTGate(1, (uint32_t)boundsCheckErr, 0x08, 0x8F);
-    setIDTGate(1, (uint32_t)invalidOpcodeErr, 0x08, 0x8F);
-    setIDTGate(1, (uint32_t)devNotAvailErr, 0x08, 0x8F);
-    setIDTGate(1, (uint32_t)doubleFaultErr, 0x08, 0x8F);
-    setIDTGate(1, (uint32_t)coprocSegOverrunErr, 0x08, 0x8F);
-    setIDTGate(1, (uint32_t)invalidTSSErr, 0x08, 0x8F);
-    setIDTGate(1, (uint32_t)segNotPresentErr, 0x08, 0x8F);
-    setIDTGate(1, (uint32_t)stackFaultErr, 0x08, 0x8F);
-    setIDTGate(1, (uint32_t)genProtFaultErr, 0x08, 0x8F);
-    setIDTGate(1, (uint32_t)pageFaultErr, 0x08, 0x8F);
-    setIDTGate(1, (uint32_t)reservedErr, 0x08, 0x8F);
-    setIDTGate(1, (uint32_t)fpuErr, 0x08, 0x8F);
-    setIDTGate(1, (uint32_t)alignCheckErr, 0x08, 0x8F);
-    setIDTGate(1, (uint32_t)machineCheckErr, 0x08, 0x8F);
-    setIDTGate(1, (uint32_t)simdErr, 0x08, 0x8F);
+    setIDTGate(2, (uint32_t)nmIntErr, 0x08, 0x8F);
+    setIDTGate(3, (uint32_t)breakErr, 0x08, 0x8F);
+    setIDTGate(4, (uint32_t)overflowErr, 0x08, 0x8F);
+    setIDTGate(5, (uint32_t)boundsCheckErr, 0x08, 0x8F);
+    setIDTGate(6, (uint32_t)invalidOpcodeErr, 0x08, 0x8F);
+    setIDTGate(7, (uint32_t)devNotAvailErr, 0x08, 0x8F);
+    setIDTGate(8, (uint32_t)doubleFaultErr, 0x08, 0x8F);
+    setIDTGate(9, (uint32_t)coprocSegOverrunErr, 0x08, 0x8F);
+    setIDTGate(10, (uint32_t)invalidTSSErr, 0x08, 0x8F);
+    setIDTGate(11, (uint32_t)segNotPresentErr, 0x08, 0x8F);
+    setIDTGate(12, (uint32_t)stackFaultErr, 0x08, 0x8F);
+    setIDTGate(13, (uint32_t)genProtFaultErr, 0x08, 0x8F);
+    setIDTGate(14, (uint32_t)pageFaultErr, 0x08, 0x8F);
+    setIDTGate(15, (uint32_t)reservedErr, 0x08, 0x8F);
+    setIDTGate(16, (uint32_t)fpuErr, 0x08, 0x8F);
+    setIDTGate(17, (uint32_t)alignCheckErr, 0x08, 0x8F);
+    setIDTGate(18, (uint32_t)machineCheckErr, 0x08, 0x8F);
+    setIDTGate(19, (uint32_t)simdErr, 0x08, 0x8F);
     for(int i = 20; i<=31; i++) setIDTGate(i, (uint32_t)reservedErr, 0x08, 0x8F);
 
     setIDTGate(0x21, (uint32_t)ps2KBDISR, 0x08, 0x8E);  // Keyboard

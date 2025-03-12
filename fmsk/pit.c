@@ -1,7 +1,6 @@
 #include "pit.h"
 #include "io.h"
 #include "utils.h"
-#include "vga.h"
 
 __attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame __attribute__((unused))) {
     CLI();
