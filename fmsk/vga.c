@@ -68,8 +68,12 @@ void printChar(const char c) {
     }
 
     if((unsigned int)video_mem >= (VIDEO_MEM_ADDR + 80*25*2)) {
-        memcpy((void *)VIDEO_MEM_ADDR, (void *)VIDEO_MEM_ADDR+25*2, (VIDEO_MEM_ADDR + 80*24*2));
+        memcpy((void *)VIDEO_MEM_ADDR, (void *)(VIDEO_MEM_ADDR + 80*2), 80 * 24 * 2);
         video_mem = (char *)(VIDEO_MEM_ADDR + 80*24*2);
+        for(char *i = (char *)(VIDEO_MEM_ADDR + 80*24*2); i < (char *)(VIDEO_MEM_ADDR + 80*25*2); i++) {
+            if ((i - (char *)VIDEO_MEM_ADDR) % 2) *i = colorAttribute;
+            else *i = ' ';
+        }        
     }
 
     updateCursorPos(((const unsigned int)video_mem - VIDEO_MEM_ADDR) / 2);
