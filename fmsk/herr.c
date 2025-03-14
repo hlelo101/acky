@@ -1,7 +1,9 @@
 #include "herr.h"
 #include "commonSettings.h"
+#include "utils.h"
 
 void herr(const char *str) {
+    CLI();
     setColorAttribute(0x4C);
     clearScr();
 

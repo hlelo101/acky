@@ -10,3 +10,4 @@ struct interrupt_frame;
 
 void initPIT(const uint32_t freq);
 __attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame __attribute__((unused)));
+void sleep(uint32_t t);
