@@ -117,6 +117,16 @@ void simdErr() {
     herr("SIMD Floating-Point Exception");
 }
 
+// That weird IRQ7
+__attribute__((interrupt)) void IRQ7(struct interrupt_frame *interruptFrame __attribute__((unused))) {
+    outb(0x20, 0x0B);
+    unsigned char irr = inb(0x20);
+    if(!(irr & 0x80)) return;
+
+    outb(0xA0, 0x0B);
+    outb(0x20, 0x0B);
+}
+
 void initIDT() {
     idtr.addr = (uint32_t)idt;
     idtr.size = sizeof(idt) - 1;
@@ -146,6 +156,7 @@ void initIDT() {
 
     setIDTGate(0x21, (uint32_t)ps2KBDISR, 0x08, 0x8E);  // Keyboard
     setIDTGate(0x20, (uint32_t)PITISR, 0x08, 0x8E);  // Timer
+    setIDTGate(0x27, (uint32_t)IRQ7, 0x08, 0x8E);  // Fucking IRQ7
     // Load!
     __asm__ __volatile__ ("lidtl (%0)" :: "r" (&idtr));
 

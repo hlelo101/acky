@@ -1,7 +1,8 @@
 #include "ata.h"
-#include "vga.h"
 #include "utils.h"
 #include "pit.h"
+#include "serial.h"
+#include "vga.h"
 
 bool primaryMasterPresent = false;
 bool primarySlavePresent = false;
@@ -29,8 +30,8 @@ void ataIdentify(bool master) {
     // Send IDENTIFY command
     outb(PRIMARY + 7, 0xEC);
     if(inb(PRIMARY + 7) == 0) {
-        if(master) print("[ATA]: Master drive not found\n");
-        else print("[ATA]: Slave drive not found\n");
+        if(master) serialSendString("[ATA]: Master drive not found\n");
+        else serialSendString("[ATA]: Slave drive not found\n");
         if(master) primaryMasterPresent = false;
         else primarySlavePresent = false;
         STI();
@@ -43,8 +44,8 @@ void ataIdentify(bool master) {
     uint16_t data[256];
     for(int i = 0; i < 256; i++) data[i] = inw(PRIMARY);
     if(data[0] == 0) {
-        if(master) print("[ATA]: Master drive not found\n");
-        else print("[ATA]: Slave drive not found\n");
+        if(master) serialSendString("[ATA]: Master drive not found\n");
+        else serialSendString("[ATA]: Slave drive not found\n");
         if(master) primaryMasterPresent = false;
         else primarySlavePresent = false;
         STI();
@@ -56,12 +57,20 @@ void ataIdentify(bool master) {
         else primarySlaveSupportsLBA48Mode = true;
     }
 
-    if(master) print("[ATA]: Master drive found\n");
-    else print("[ATA]: Slave drive found\n");
+    if(master) {
+        primaryMasterPresent = true;
+        serialSendString("[ATA]: Master drive found\n");
+    } else {
+        primarySlavePresent = true;
+        serialSendString("[ATA]: Slave drive found\n");
+    }
     STI();
 }
 
 void ataRead(bool master, uint16_t *buffer, uint64_t lba, uint16_t sectorCount) {
+    if(master && !primaryMasterPresent) return;
+    else if(!master && !primarySlavePresent) return;
+
     CLI();
     // Send the data and commands
     outb(PRIMARY + 6, master ? 0x40 : 0x50);
@@ -81,16 +90,20 @@ void ataRead(bool master, uint16_t *buffer, uint64_t lba, uint16_t sectorCount) 
 
     // Read data
     for(int i = 0; i < sectorCount; i++) {
-        for(int j = 0; j < 256; j++) {
-            buffer[i * 256 + j] = inw(PRIMARY);
-            for(int i = 0; i<= 30000; i++) asm volatile("nop"); // eeehhh I mean it throws a GPF without it
-        }
+        for(int j = 0; j < 256; j++) buffer[i * 256 + j] = inw(PRIMARY);
         ataWait();
     }
     STI();
 }
 
+int boolToInt(bool b) {
+    return b ? 1 : 0;
+}
+
 void ataInit() {
     ataIdentify(true);
     ataIdentify(false);
+
+    print("[ATA]: Found " ); printInt(boolToInt(primaryMasterPresent) + boolToInt(primarySlavePresent));
+    print((boolToInt(primaryMasterPresent) + boolToInt(primarySlavePresent)) == 1 ? " drive\n" : " drives\n");
 }

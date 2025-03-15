@@ -6,6 +6,7 @@
 #include "../multiboot.h"
 #include "pit.h"
 #include "ata.h"
+#include "serial.h"
 
 unsigned int systemMemoryB = 0;
 extern void initGDT();
@@ -23,6 +24,8 @@ void kmain(multiboot_info_t* mbd, uint32_t magic) {
     printInt(systemMemoryB / 1024 / 1000); print("MB Ready\n");
     if(mbd->mods_count > 0) herr("Unsupported kernel modules loaded");
 
+    initSerial();
+    serialSendString("Kernel initialization started. Version " VERSION "\n");
     initGDT();
     initPIT(1000);
     initIDT();
@@ -30,6 +33,6 @@ void kmain(multiboot_info_t* mbd, uint32_t magic) {
     initKmalloc(0x1000);
     ataInit();
     enableCursor(9, 11);
-
+    
     while(1);
 }

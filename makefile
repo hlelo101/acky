@@ -1,10 +1,10 @@
 CC = ~/opt/cross/bin/i386-elf-gcc
-CFLAGS = -ffreestanding -O2 -Wall -Wextra -nostdlib -mno-80387 -c
+CFLAGS = -ffreestanding -O2 -Wall -Wextra -nostdlib -mno-80387 -lgcc -c
 LDFLAGS = -T linker.ld -o fmsos.bin -ffreestanding -O2 -nostdlib -lgcc
 AS = nasm
 ASFLAGS = -felf32
 
-QEMUCMD = qemu-system-i386 -drive file=fmsos.iso,format=raw,media=disk -m 124
+QEMUCMD = qemu-system-i386 -drive file=fmsos.iso,format=raw,media=disk -m 124 -serial stdio
 
 all: build mkiso clean
 
@@ -23,8 +23,9 @@ build:
 	$(CC) $(CFLAGS) fmsk/herr.c -o ct/herr.o
 	$(CC) $(CFLAGS) fmsk/pit.c -o ct/pit.o
 	$(CC) $(CFLAGS) fmsk/ata.c -o ct/ata.o
+	$(CC) $(CFLAGS) fmsk/serial.c -o ct/serial.o
 
-	$(CC) $(LDFLAGS) ct/boot.o ct/kmain.o ct/vga.o ct/io.o ct/memory.o ct/gdt.o ct/idt.o ct/ps2kbd.o ct/herr.o ct/pit.o ct/ata.o
+	$(CC) $(LDFLAGS) ct/boot.o ct/kmain.o ct/vga.o ct/io.o ct/memory.o ct/gdt.o ct/idt.o ct/ps2kbd.o ct/herr.o ct/pit.o ct/ata.o ct/serial.o
 	stat fmsos.bin
 
 mkiso:
