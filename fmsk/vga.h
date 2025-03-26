@@ -1,5 +1,5 @@
 #pragma once
-#define VIDEO_MEM_ADDR 0xC00B8000
+#define VIDEO_MEM_ADDR 0xB8000
 #include <stdint.h>
 
 void printChar(const char c);
@@ -10,3 +10,4 @@ void printInt(const int integer);
 void updateCursorPos(const unsigned int offset);
 void disableCursor();
 void enableCursor(uint8_t cursor_start, uint8_t cursor_end);
+void intToStr(int num, char *str);

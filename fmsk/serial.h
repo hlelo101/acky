@@ -7,3 +7,4 @@
 void initSerial();
 void serialSend(char c);
 void serialSendString(const char* str);
+void serialSendInt(int num);

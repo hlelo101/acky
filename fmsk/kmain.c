@@ -7,6 +7,7 @@
 #include "pit.h"
 #include "ata.h"
 #include "serial.h"
+#include "fs.h"
 
 unsigned int systemMemoryB = 0;
 extern void initGDT();
@@ -16,7 +17,7 @@ extern void initGDT();
 void kmain(multiboot_info_t* mbd, uint32_t magic) {
     if(magic != MULTIBOOT_BOOTLOADER_MAGIC) herr("Invalid multiboot magic");
     if(!(mbd->flags >> 6 & 0x1)) herr("Invalid memory map");
-    setColorAttribute(0x3B);
+    setColorAttribute(DEFAULT_COLOR);
     clearScr();
     print(VERSION); printChar('\n');
     print("CMDLine: "); print((const char*)mbd->cmdline); printChar('\n');
@@ -29,10 +30,9 @@ void kmain(multiboot_info_t* mbd, uint32_t magic) {
     initGDT();
     initPIT(1000);
     initIDT();
-    initMemory(systemMemoryB, (*(uint32_t*)(mbd->mods_addr + 4) + 0xFFF) & ~0xFFF);
-    initKmalloc(0x1000);
     ataInit();
+    initFS();
     enableCursor(9, 11);
-    
+
     while(1);
 }

@@ -107,3 +107,7 @@ void ataInit() {
     print("[ATA]: Found " ); printInt(boolToInt(primaryMasterPresent) + boolToInt(primarySlavePresent));
     print((boolToInt(primaryMasterPresent) + boolToInt(primarySlavePresent)) == 1 ? " drive\n" : " drives\n");
 }
+
+bool ataDiskPresent(bool master) {
+    return master ? primaryMasterPresent : primarySlavePresent;
+}

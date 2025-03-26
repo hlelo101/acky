@@ -1,4 +1,6 @@
 #include "serial.h"
+#include "vga.h"
+
 bool faulty = false;
 
 void initSerial() {
@@ -31,4 +33,10 @@ void serialSendString(const char* str) {
     for(int i = 0; str[i] != '\0'; i++) {
         serialSend(str[i]);
     }
+}
+
+void serialSendInt(int num) {
+    char buf[12];
+    intToStr(num, buf);
+    serialSendString(buf);
 }

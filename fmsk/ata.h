@@ -17,3 +17,4 @@ void ataWait();
 void ataIdentify(bool master);
 void ataInit();
 void ataRead(bool master, uint16_t *buffer, uint64_t lba, uint16_t sectorCount);
+bool ataDiskPresent(bool master);
