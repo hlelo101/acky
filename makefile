@@ -6,7 +6,7 @@ ASFLAGS = -felf32
 
 QEMUCMD = qemu-system-i386 -drive file=fmsos.iso,format=raw,media=disk -m 124 -serial stdio
 
-all: build mkiso clean
+all: build userspace mkiso clean
 
 build:
 	mkdir ct
@@ -25,8 +25,9 @@ build:
 	$(CC) $(CFLAGS) fmsk/ata.c -o ct/ata.o
 	$(CC) $(CFLAGS) fmsk/serial.c -o ct/serial.o
 	$(CC) $(CFLAGS) fmsk/fs.c -o ct/fs.o
+	$(CC) $(CFLAGS) fmsk/process.c -o ct/process.o
 
-	$(CC) $(LDFLAGS) ct/boot.o ct/kmain.o ct/vga.o ct/io.o ct/memory.o ct/gdt.o ct/idt.o ct/ps2kbd.o ct/herr.o ct/pit.o ct/ata.o ct/serial.o ct/fs.o
+	$(CC) $(LDFLAGS) ct/boot.o ct/kmain.o ct/vga.o ct/io.o ct/memory.o ct/gdt.o ct/idt.o ct/ps2kbd.o ct/herr.o ct/pit.o ct/ata.o ct/serial.o ct/fs.o ct/process.o
 	stat fmsos.bin
 
 mkiso:
@@ -34,7 +35,14 @@ mkiso:
 	cp grub.cfg iso/boot/grub/grub.cfg
 	cp fmsos.bin iso/boot/
 
+	mkdir iso/apps
+	cp ct/test.bin iso/apps/
+
+	echo "Hai! Test" > iso/test.txt
 	grub-mkrescue -o fmsos.iso iso
+
+userspace:
+	$(AS) $(ASFLAGS) apps/test.asm -o ct/test.bin
 
 clean:
 	rm -r ct/

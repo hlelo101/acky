@@ -8,6 +8,7 @@
 #define LOC_ATA_MASTER 0
 #define LOC_ATA_SLAVE 1
 #define FS_TYPE_ISO9660 0
+#define BLOCK_SIZE 2048
 
 typedef struct {
     char name[32];
@@ -19,5 +20,6 @@ typedef struct {
 } drive;
 
 void initFS();
-void parsePartitionTable(const uint8_t* buffer, const char letter, const char* name, unsigned int loc);
-void addDrive(char letter, const char* name, const unsigned int lbaStart, const unsigned int lbaEnd, const unsigned int loc, unsigned int type);
+int parsePartitionTable(const uint8_t* buffer, const char letter, const char* name, unsigned int loc);
+int addDrive(char letter, const char* name, const unsigned int lbaStart, const unsigned int lbaEnd, const unsigned int loc, unsigned int type);
+void fsReadFile(const char *path, uint8_t *buffer);

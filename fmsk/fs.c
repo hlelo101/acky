@@ -1,9 +1,20 @@
 #include "fs.h"
+#include "vga.h"
 
 drive drives[26];
 int driveCount = 0;
 
-void addDrive(char letter, const char* name, const unsigned int lbaStart, const unsigned int lbaEnd, const unsigned int loc, unsigned int type) {
+void commonRead(const unsigned int loc, const unsigned int lba, const unsigned int count, uint8_t* buffer) {
+    switch(loc) {
+        case LOC_ATA_MASTER:
+            ataRead(true, (uint16_t *)buffer, lba * 4, count * 4);
+            break;
+        default:
+            return;
+    }
+}
+
+int addDrive(char letter, const char* name, const unsigned int lbaStart, const unsigned int lbaEnd, const unsigned int loc, unsigned int type) {
     drives[driveCount].lbaStart = lbaStart;
     drives[driveCount].lbaEnd = lbaEnd;
     drives[driveCount].letter = letter;
@@ -11,17 +22,19 @@ void addDrive(char letter, const char* name, const unsigned int lbaStart, const 
     strcpy(drives[driveCount].name, name);
     drives[driveCount].type = type;
     driveCount++;
+
+    return driveCount - 1;
 }
 
 bool isISO9660(const unsigned int loc) {
-    uint8_t buffer[512];
-    ataRead(loc == LOC_ATA_MASTER ? true : false, (uint16_t *)buffer, (loc == LOC_ATA_MASTER || loc == LOC_ATA_SLAVE) ? 64 : 16, 1);
+    uint8_t buffer[2048];
+    commonRead(loc, 16, 1, buffer);
     const char id[] = "CD001";
     for(int i = 1; i <= 5; i++) if(buffer[i] != id[i - 1]) return false;
     return true;
 }
 
-void parsePartitionTable(const uint8_t* buffer, const char letter, const char* name, unsigned int loc) {
+int parsePartitionTable(const uint8_t* buffer, const char letter, const char* name, unsigned int loc) {
     for(int i = 0; i < 4; i++) {
         const int offset = 446 + 16 * i;
 
@@ -36,24 +49,89 @@ void parsePartitionTable(const uint8_t* buffer, const char letter, const char* n
             type = FS_TYPE_ISO9660;
         }
         else type = 512;
-        addDrive(letter, name, lbaStart, partitionsize, LOC_ATA_MASTER, type);
+        return addDrive(letter, name, lbaStart, partitionsize, loc, type);
     }
+
+    return 0;
 }
 
-void iso9660ReadPVD(const int diskLoc) {
-    uint8_t buffer[2048];
-    ataRead(diskLoc == LOC_ATA_MASTER ? true : false, (uint16_t *)buffer, 64, 1); // 64 because an ATA drive uses 512 byte sectors
-    serialSendString("[FS]: ID: "); 
-    for(int i = 1; i<=5; i++) {
-        serialSend(buffer[i]);
+int getDriveIndexFromLetter(const char c) {
+    for(int i = 0; i < driveCount; i++) {
+        if(drives[i].letter == c) return i;
     }
-    serialSendString("\n");
+    return -1;
+}
 
-    serialSendString("[FS]: Volume Identifier: ");
-    for(int i = 0; i < 32; i++) {
-        serialSend(buffer[0x20 + i]);
+// A path should look something like this: "A:/folder/file.ext"
+void iso9660Read(const char *path, int idx, uint8_t *outputBuffer) {
+    // Process the path
+    int pathSize = 0;
+    while(path[pathSize] != '\0') pathSize++;
+    char processedPath[pathSize + 3];
+    strcpy(processedPath, path);
+    processedPath[pathSize] = ';';
+    processedPath[pathSize + 1] = '1';
+    processedPath[pathSize + 2] = '\0';
+
+    // Read the root folder location
+    uint8_t buffer[2048];
+    commonRead(drives[idx].loc, 16, 1, buffer);
+    // Root directory entry offset is 156
+    uint32_t lastFolderLoc = buffer[156 + 2] | (buffer[156 + 3] << 8) | (buffer[156 + 4] << 16) | (buffer[156 + 5] << 24);
+    uint8_t fileSize = 0;
+    bool lastDirIsFile = false;
+    // Go through each directories
+    int lastSlashOffset = 3;
+    while(processedPath[lastSlashOffset] != '\0') {
+        // Get the target folder name
+        char folderName[32];
+        int j = lastSlashOffset;
+        while(processedPath[j] != '/' && processedPath[j] != '\0') {
+            folderName[j - lastSlashOffset] = processedPath[j];
+            j++;
+        }
+        folderName[j - lastSlashOffset] = '\0';
+        lastSlashOffset = j + 1;
+
+        // At this point, we have the folder name, try to find it in the last dir by iterating through each entry
+        commonRead(drives[idx].loc, lastFolderLoc, 1, buffer);
+        int entryOffset = 0;
+        while(buffer[entryOffset] != 0) {
+            // Check the name
+            uint8_t dirEntryLength = buffer[entryOffset];
+            uint8_t nameLength = buffer[entryOffset + 32];
+            fileSize = buffer[entryOffset + 26];
+            char dirName[32] = {0};
+            memcpy(dirName, buffer + entryOffset + 33, nameLength);
+
+            // If the object is a file, it ends with ;1
+            if(dirName[nameLength - 2] == ';' && dirName[nameLength - 1] == '1') lastDirIsFile = true;
+            if(strcmp(dirName, folderName) == 0) {
+                // Found the folder, get the location
+                lastFolderLoc = buffer[entryOffset + 2] | (buffer[entryOffset + 3] << 8) | (buffer[entryOffset + 4] << 16) | (buffer[entryOffset + 5] << 24);
+                break;
+            }
+
+            entryOffset += dirEntryLength;
+        }
     }
-    serialSendString("\n");
+    if(!lastDirIsFile) return; // Not found
+
+    // Read the file
+    commonRead(drives[idx].loc, lastFolderLoc, 1, buffer);
+    for(int i = 0; i < ((fileSize == 0) ? 2048 : fileSize); i++) outputBuffer[i] = buffer[i];
+}
+
+void fsReadFile(const char *path, uint8_t *buffer) {
+    if(getDriveIndexFromLetter(path[0]) < 0) return;
+
+    switch(drives[getDriveIndexFromLetter(path[0])].type) {
+        case FS_TYPE_ISO9660:
+            iso9660Read(path, getDriveIndexFromLetter(path[0]), buffer);
+            break;
+        default:
+            return;
+    }
 }
 
 void initFS() {
@@ -64,8 +142,6 @@ void initFS() {
         uint8_t buffer[512];
         ataRead(true, (uint16_t *)buffer, 0, 1);
         parsePartitionTable(buffer, letters[count++], "Primary Master", LOC_ATA_MASTER);
-
-        iso9660ReadPVD(LOC_ATA_MASTER);
     }
     if(ataDiskPresent(false)) {
         serialSendString("[FS]: Adding slave drive\n");

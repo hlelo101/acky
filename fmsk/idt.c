@@ -127,6 +127,12 @@ __attribute__((interrupt)) void IRQ7(struct interrupt_frame *interruptFrame __at
     outb(0x20, 0x0B);
 }
 
+__attribute__((interrupt)) void printService(struct interrupt_frame *interruptFrame __attribute__((unused))) {
+    unsigned char c;
+    asm volatile ("mov %%al, %0" : "=r" (c));
+    printChar(c);
+}
+
 void initIDT() {
     idtr.addr = (uint32_t)idt;
     idtr.size = sizeof(idt) - 1;
@@ -157,6 +163,7 @@ void initIDT() {
     setIDTGate(0x21, (uint32_t)ps2KBDISR, 0x08, 0x8E);  // Keyboard
     setIDTGate(0x20, (uint32_t)PITISR, 0x08, 0x8E);  // Timer
     setIDTGate(0x27, (uint32_t)IRQ7, 0x08, 0x8E);  // Fucking IRQ7
+    setIDTGate(0x40, (uint32_t)printService, 0x08, 0x8E);  // Printy print
     // Load!
     __asm__ __volatile__ ("lidtl (%0)" :: "r" (&idtr));
 
