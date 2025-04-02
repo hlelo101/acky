@@ -3,6 +3,7 @@
 #include "ps2kbd.h"
 #include "herr.h"
 #include "pit.h"
+#include "utils.h"
 
 gate idt[256];
 idtrDesc idtr;
@@ -128,9 +129,11 @@ __attribute__((interrupt)) void IRQ7(struct interrupt_frame *interruptFrame __at
 }
 
 __attribute__((interrupt)) void printService(struct interrupt_frame *interruptFrame __attribute__((unused))) {
+    CLI();
     unsigned char c;
     asm volatile ("mov %%al, %0" : "=r" (c));
     printChar(c);
+    STI();
 }
 
 void initIDT() {

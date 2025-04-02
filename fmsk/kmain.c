@@ -9,6 +9,9 @@
 #include "serial.h"
 #include "fs.h"
 #include "process.h"
+#include "gdt.h"
+
+bool canPreempt = false;
 
 unsigned int systemMemoryB = 0;
 extern void initGDT();
@@ -17,7 +20,6 @@ unsigned int getSystemMemory() {
     return systemMemoryB;
 }
 
-// The kernel SHOULD get loaded at 0x100000 aka 1MB
 void kmain(multiboot_info_t* mbd, uint32_t magic) {
     if(magic != MULTIBOOT_BOOTLOADER_MAGIC) herr("Invalid multiboot magic");
     if(!(mbd->flags >> 6 & 0x1)) herr("Invalid memory map");
@@ -38,12 +40,14 @@ void kmain(multiboot_info_t* mbd, uint32_t magic) {
     initFS();
     enableCursor(9, 11);
     initMem();
-
-    // uint8_t buffer[2048] = {0};
-    // fsReadFile("A:/APPS/TEST.BIN", buffer);
-    // memcpy((void *)0x300000, buffer, 2048);
-    // asm volatile ("jmp 0x300000");
     
-    spawnProcess("Test Process", "A:/APPS/TEST.BIN");
+    spawnProcess("Kernel", "A:/APPS/KPROC.BIN");
+
+    spawnProcess("Test Process 1", "A:/APPS/TEST.BIN");
+    //spawnProcess("Test Process 2", "A:/APPS/TEST2.BIN");
+    spawnProcess("Test Process 3", "A:/APPS/TEST3.BIN");
+    serialSendString("Processes spawned\n");
+
+    canPreempt = true;
     while(1);
 }

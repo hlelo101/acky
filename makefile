@@ -4,7 +4,7 @@ LDFLAGS = -T linker.ld -o fmsos.bin -ffreestanding -O2 -nostdlib -lgcc
 AS = nasm
 ASFLAGS = -felf32
 
-QEMUCMD = qemu-system-i386 -drive file=fmsos.iso,format=raw,media=disk -m 124 -serial stdio
+QEMUCMD = qemu-system-i386 -drive file=fmsos.iso,format=raw,media=disk -m 124 -serial stdio -display gtk,zoom-to-fit=on
 
 all: build userspace mkiso clean
 
@@ -12,9 +12,10 @@ build:
 	mkdir ct
 
 	$(AS) $(ASFLAGS) multiboot.asm -o ct/boot.o
-	$(AS) $(ASFLAGS) fmsk/gdt.asm -o ct/gdt.o
+	# $(AS) $(ASFLAGS) fmsk/gdt.asm -o ct/gdt.o
 
 	$(CC) $(CFLAGS) fmsk/kmain.c -o ct/kmain.o
+	$(CC) $(CFLAGS) fmsk/gdt.c -o ct/gdt.o
 	$(CC) $(CFLAGS) fmsk/vga.c -o ct/vga.o
 	$(CC) $(CFLAGS) fmsk/io.c -o ct/io.o
 	$(CC) $(CFLAGS) fmsk/memory.c -o ct/memory.o
@@ -36,13 +37,17 @@ mkiso:
 	cp fmsos.bin iso/boot/
 
 	mkdir iso/apps
-	cp ct/test.bin iso/apps/
+	cp ct/*.bin iso/apps/
 
 	echo "Hai! Test" > iso/test.txt
 	grub-mkrescue -o fmsos.iso iso
 
 userspace:
+	$(AS) $(ASFLAGS) apps/kproc.asm -o ct/kproc.bin
+
 	$(AS) $(ASFLAGS) apps/test.asm -o ct/test.bin
+	$(AS) $(ASFLAGS) apps/test2.asm -o ct/test2.bin
+	$(AS) $(ASFLAGS) apps/test3.asm -o ct/test3.bin
 
 clean:
 	rm -r ct/

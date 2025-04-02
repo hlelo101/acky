@@ -1,12 +1,26 @@
 #include "pit.h"
 #include "io.h"
 #include "utils.h"
-#include "vga.h"
+#include "process.h"
+#include "serial.h"
+#include "kmain.h"
 
 uint32_t tick = 0;
 
-__attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame __attribute__((unused))) {
+__attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame) {
     CLI();
+    
+    if((tick % 10) && canPreempt) { // Switch task
+        const int currentProcessIndex = getCurrentProcessIdx();
+        const int nextProcessIndex = getNextProcess();
+        if(nextProcessIndex == -1) goto exit;
+
+        setProcessPC(currentProcessIndex, (uint32_t)interruptFrame->ip);
+        interruptFrame->ip = getPCLoc(nextProcessIndex);
+        // interruptFrame->flags |= 0x200; // Set the interrupt flag (is that really needed?)
+    }
+
+    exit:
     tick++;
     outb(0x20, 0x20);
     STI();

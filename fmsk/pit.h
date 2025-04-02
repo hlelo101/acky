@@ -6,8 +6,14 @@
 #define PIT_CH2_DATA 0x42
 #define PIT_COM 0x43
 
-struct interrupt_frame;
+struct interrupt_frame {
+    uint32_t ip;
+    uint32_t cs;
+    uint32_t flags;
+    uint32_t sp;
+    uint32_t ss;
+};
 
 void initPIT(const uint32_t freq);
-__attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame __attribute__((unused)));
+__attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame);
 void sleep(uint32_t t);
