@@ -165,7 +165,7 @@ void initIDT() {
 
     setIDTGate(0x21, (uint32_t)ps2KBDISR, 0x08, 0x8E);  // Keyboard
     setIDTGate(0x20, (uint32_t)PITISR, 0x08, 0x8E);  // Timer
-    setIDTGate(0x27, (uint32_t)IRQ7, 0x08, 0x8E);  // Fucking IRQ7
+    setIDTGate(0x27, (uint32_t)IRQ7, 0x08, 0x8E);  // Fucking IRQ7 that triggers for no fucking reason why the fuck are you redundant you stupid motherfu-
     setIDTGate(0x40, (uint32_t)printService, 0x08, 0x8E);  // Printy print
     // Load!
     __asm__ __volatile__ ("lidtl (%0)" :: "r" (&idtr));

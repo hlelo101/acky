@@ -1,7 +1,8 @@
 #include "gdt.h"
 
 GDTR gdtr;
-gdtDescriptor gdt[3];
+gdtDescriptor gdt[NUM_GDT_ENTRIES];
+gdtDescriptor currentLDT[NUM_LDT_ENTRIES];
 
 void setGDTEntry(int index, uint32_t base, uint32_t limit, uint8_t access, uint8_t granularity) {
     gdt[index].baseLow = (base & 0xFFFF);
@@ -12,12 +13,35 @@ void setGDTEntry(int index, uint32_t base, uint32_t limit, uint8_t access, uint8
     gdt[index].access = access;
 }
 
+void setLDTEntry(int index, uint32_t base, uint32_t limit, uint8_t access, uint8_t granularity) {
+    currentLDT[index].baseLow = (base & 0xFFFF);
+    currentLDT[index].baseMiddle = (base >> 16) & 0xFF;
+    currentLDT[index].baseHigh = (base >> 24) & 0xFF;
+    currentLDT[index].limitLow = (limit & 0xFFFF);
+    currentLDT[index].granularity = ((limit >> 16) & 0x0F) | (granularity & 0xF0);
+    currentLDT[index].access = access;
+}
+
+void updateLDTBase(uint32_t newBase) {
+    for(int i = 0; i < NUM_LDT_ENTRIES; i++) {
+        currentLDT[i].baseLow = (newBase & 0xFFFF);
+        currentLDT[i].baseMiddle = (newBase >> 16) & 0xFF;
+        currentLDT[i].baseHigh = (newBase >> 24) & 0xFF;
+    }
+}
+
+
 
 void initGDT() {
+    // Set up the initial LDT
+    setLDTEntry(0, 0, 0x100, 0x9A, 0xCF); // Code segment
+    setLDTEntry(1, 0, 0x100, 0x92, 0xCF); // Data segment
+
     // Set up the GDT
     setGDTEntry(0, 0, 0, 0, 0); // Null segment
     setGDTEntry(1, 0, 0x03FF, 0x9A, 0xCF); // Code segment
     setGDTEntry(2, 0, 0xFFFF, 0x92, 0xCF); // Data segment
+    setGDTEntry(3, (uint32_t)&currentLDT, sizeof(currentLDT) - 1, 0x82, 0xCF); // LDT segment
 
     // The GDTR
     gdtr.size = sizeof(gdt) - 1;
@@ -36,56 +60,8 @@ void initGDT() {
         "mov %%ax, %%fs\n"
         "mov %%ax, %%gs\n"
         "mov %%ax, %%ss\n"
-        :
-        :
-        : "%ax"
+        : : : "%ax"
     );
+
+    asm volatile("lldt %0" : : "r"(3 * 8));
 }
-
-// Used to be this: (it was just rewritten in C because it's easier to then make modifications to it)
-// [BITS 32]
-
-// gdt:
-//     ; Null descriptor
-//     dq 0
-//     ; Kernel Mode Code Segment Descriptor
-//     dw 0x03FF
-//     dw 0
-//     db 0
-//     db 10011010b
-//     db 11001111b
-//     db 0
-//     ; Kernel Mode Data Segment Descriptor
-//     dw 0xffff
-//     dw 0
-//     db 0
-//     db 10010010b
-//     db 11001111b
-//     db 0
-// gdt_end:
-
-// gdtr:
-//     dw gdt_end - gdt - 1
-//     dd gdt
-
-// global initGDT
-// initGDT:
-//     cli
-// loadGDT:
-//     lgdt [gdtr]
-
-//     ; Grub should have already put the CPU in protected mode but eh
-//     mov eax, cr0
-//     or eax, 1
-//     mov cr0, eax
-
-//     jmp 0x08:loadGDTjmp
-// loadGDTjmp:
-//     mov ax, 0x10
-//     mov ds, ax
-//     mov es, ax
-//     mov fs, ax
-//     mov gs, ax
-//     mov ss, ax
-
-//     ret
