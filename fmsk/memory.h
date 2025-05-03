@@ -17,3 +17,4 @@ void strcpy(char *dest, const char *src);
 int strcmp(const char *s1, const char *s2);
 void initMem();
 uint32_t allocMem(uint32_t size);
+int freeMem(uint32_t memStart);

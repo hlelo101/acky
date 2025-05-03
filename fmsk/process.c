@@ -1,14 +1,18 @@
 #include "process.h"
-#include "serial.h"
 
 int processCount = 0;
 int schedulerProcessAt = 0;
 process processes[256];
 
-int createProcessEntry(const char *name) {
+int createProcessEntry(const char *name, uint32_t fileSize) {
     strcpy(processes[processCount].name, name);
-    processes[processCount].used = true;
-    processes[processCount].memStart = allocMem(DEFAULT_PROCESS_MEMSIZE);
+    processes[processCount].pcLoc = 0;
+    processes[processCount].regs.flags = 0x3206; // 0x206 for ring 0
+    processes[processCount].regs.esp = 4096;
+    processes[processCount].waiting = false;
+    processes[processCount].memStart = allocMem(fileSize);
+    serialSendString("[createProcessEntry()]: New process \""); serialSendString(name);
+    serialSendString("\" , memory allocated at: "); serialSendInt(processes[processCount].memStart); serialSend('\n');
     processes[processCount].memSize = DEFAULT_PROCESS_MEMSIZE;
     processCount++;
     
@@ -17,8 +21,13 @@ int createProcessEntry(const char *name) {
 
 int getNextProcess() {
     if(processCount == 0) return -1;
+
+    pickOther:
     schedulerProcessAt++;
-    if(schedulerProcessAt >= processCount) schedulerProcessAt = 0;
+    if(schedulerProcessAt >= processCount) schedulerProcessAt = 1;
+    if(schedulerProcessAt == 0) schedulerProcessAt = 1; // Skip the kernel process
+    if(processes[schedulerProcessAt].waiting) goto pickOther;
+
     return schedulerProcessAt;
 }
 
@@ -37,23 +46,26 @@ void setProcessPC(int idx, uint32_t pc) {
     processes[idx].pcLoc = pc;
 }
 
-void setProcessRegs(int idx, generalRegs *regs) {
-    if(idx < 0 || idx >= processCount) return;
-    processes[idx].regs = *regs;
-}
-
-void getProcessRegs(int idx, generalRegs *regs) {
-    if(idx < 0 || idx >= processCount) return;
-    *regs = processes[idx].regs;
-}
-
-void spawnProcess(const char *name, const char *path) {
+int spawnProcess(const char *name, const char *path) {
     uint8_t processBuffer[2048] = {0};
-    fsReadFile(path, processBuffer);
-    if(processBuffer[0] == 0) return; // File not found
-    int processIndex = createProcessEntry(name);
+    fileInfo info;
+    fsReadFile(path, processBuffer, &info);
+
+    if(processBuffer[0] == 0) return -1; // File not found
+    int processIndex = createProcessEntry(name, info.size);
     memcpy((void *)processes[processIndex].memStart, processBuffer, 2048);
-    processes[processIndex].pcLoc = processes[processIndex].memStart;
+
+    return processIndex;
 }
 
-// Handle LDT stuff
+void kill(int idx) {
+    if(idx < 0 || idx >= processCount) return;
+    serialSendString("[kill()]: Killing process \""); serialSendString(processes[idx].name); serialSendString("\"\n");
+    const uint32_t memSize = processes[idx].memSize;
+    freeMem(processes[idx].memStart);
+    for(int i = idx; i < processCount - 1; i++) {
+        processes[i + 1].memStart -= memSize;
+        processes[i] = processes[i + 1];
+    }
+    processCount--;
+}

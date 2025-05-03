@@ -46,7 +46,7 @@ int strcmp(const char *s1, const char *s2) {
 uint32_t allocMem(uint32_t size) {
     if(memList[memIndex - 1].startAddr + size > getSystemMemory()) herr("Out of memory");
     if(memIndex >= MEM_LIST_SIZE) herr("Memory list overflow");
-    memList[memIndex].startAddr = memList[memIndex - 1].startAddr + memList[memIndex - 1].size;
+    memList[memIndex].startAddr = memList[memIndex - 1].startAddr + memList[memIndex - 1].size + 4096; // Add 4KB for a potential stack
     memList[memIndex].size = size;
     memIndex++;
 
@@ -59,4 +59,23 @@ void initMem() {
     memList[0].size = 0;
     // Allocate memory for the kernel
     allocMem(0x300000); // 3MB
+}
+
+int freeMem(uint32_t memStart) {
+    if(memStart <= 0) return -1;
+    for(int i = 0; i < memIndex; i++) {
+        if(memList[i].startAddr == memStart) {
+            uint32_t size = memList[i].size;
+            for(int j = i; j < memIndex - 1; j++) {
+                memList[j + 1].startAddr -= size;
+                memList[j] = memList[j + 1];
+            }
+            memIndex--;
+
+            memcpy((void *)memStart, (void *)(memStart + size), memList[memIndex].startAddr - memStart);
+            return memStart;
+        }
+    }
+
+    return -1; // Not found
 }

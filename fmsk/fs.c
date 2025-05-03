@@ -63,7 +63,7 @@ int getDriveIndexFromLetter(const char c) {
 }
 
 // A path should look something like this: "A:/folder/file.ext"
-void iso9660Read(const char *path, int idx, uint8_t *outputBuffer) {
+void iso9660Read(const char *path, int idx, uint8_t *outputBuffer, fileInfo *info) {
     // Process the path
     int pathSize = 0;
     while(path[pathSize] != '\0') pathSize++;
@@ -82,9 +82,10 @@ void iso9660Read(const char *path, int idx, uint8_t *outputBuffer) {
     bool lastDirIsFile = false;
     // Go through each directories
     int lastSlashOffset = 3;
+
+    // Get the target folder name
+    char folderName[32];
     while(processedPath[lastSlashOffset] != '\0') {
-        // Get the target folder name
-        char folderName[32];
         int j = lastSlashOffset;
         while(processedPath[j] != '/' && processedPath[j] != '\0') {
             folderName[j - lastSlashOffset] = processedPath[j];
@@ -117,17 +118,19 @@ void iso9660Read(const char *path, int idx, uint8_t *outputBuffer) {
     }
     if(!lastDirIsFile) return; // Not found
 
+    for(int i = 0; i<32; i++) info->name[i] = folderName[i];
     // Read the file
     commonRead(drives[idx].loc, lastFolderLoc, 1, buffer);
+    info->size = fileSize;
     for(int i = 0; i < ((fileSize == 0) ? 2048 : fileSize); i++) outputBuffer[i] = buffer[i];
 }
 
-void fsReadFile(const char *path, uint8_t *buffer) {
+void fsReadFile(const char *path, uint8_t *buffer, fileInfo *info) {
     if(getDriveIndexFromLetter(path[0]) < 0) return;
 
     switch(drives[getDriveIndexFromLetter(path[0])].type) {
         case FS_TYPE_ISO9660:
-            iso9660Read(path, getDriveIndexFromLetter(path[0]), buffer);
+            iso9660Read(path, getDriveIndexFromLetter(path[0]), buffer, info);
             break;
         default:
             return;

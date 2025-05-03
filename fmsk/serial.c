@@ -1,5 +1,6 @@
 #include "serial.h"
 #include "vga.h"
+#include "utils.h"
 
 bool faulty = false;
 
@@ -27,6 +28,7 @@ void serialSend(char c) {
     if(faulty) return;
     while((inb(COM1 + 5) & 0x20) == 0);
     outb(COM1, c);
+    bochsConsolePrintChar(c);
 }
 
 void serialSendString(const char* str) {

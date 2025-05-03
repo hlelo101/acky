@@ -1,24 +1,67 @@
 [bits 32]
 
-section .text
-halt:
-    mov si, string
-    ; mov si, 'H'
-    call print_str
-    ; hlt
-    jmp halt
+movthing:
+; xchg bx, bx
+mov eax, 0xABCD
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+jmp movthing
 
-print_str:
-    ; String in SI
-    cmp byte [si], 0
-    je print_done
-    mov al, [si]
-    int 0x40 ; Pix OS Write char syscall
-    hlt
-    inc si
-    jmp print_str
-print_done:
-    ret
+; notequalwtf:
+;     mov al, 'X'
+;     int 0x40 ; syscally syscall :3
+;     hlt
+;     jmp halt
 
-section .data
-string db 'Hello from test2.asm', 0
+; halt:
+;     mov ebx, string
+; 	; xchg bx, bx
+;     call print_string
+;     jmp halt
+
+; ; String address in EBX
+; print_string:
+; 	pusha
+; print_string_loop:
+; 	mov al, [ebx]
+; 	int 0x40
+; 	inc ebx
+; 	cmp byte [ebx], 0
+; 	jne print_string_loop
+	
+; 	popa
+; 	ret
+
+; string db 'Hello from test2.asm', 10, 0

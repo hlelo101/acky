@@ -19,7 +19,13 @@ typedef struct {
     unsigned int type;
 } drive;
 
+typedef struct {
+    char name[32];
+    uint32_t size;
+} fileInfo;
+
 void initFS();
 int parsePartitionTable(const uint8_t* buffer, const char letter, const char* name, unsigned int loc);
 int addDrive(char letter, const char* name, const unsigned int lbaStart, const unsigned int lbaEnd, const unsigned int loc, unsigned int type);
-void fsReadFile(const char *path, uint8_t *buffer);
+void iso9660Read(const char *path, int idx, uint8_t *outputBuffer, fileInfo *info);
+void fsReadFile(const char *path, uint8_t *buffer, fileInfo *info);

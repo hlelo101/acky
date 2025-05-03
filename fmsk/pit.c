@@ -4,26 +4,70 @@
 #include "process.h"
 #include "serial.h"
 #include "kmain.h"
+#include "gdt.h"
 
 uint32_t tick = 0;
 
 __attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame) {
-    CLI();
+    asm volatile("push %ebx\npush %ecx\npush %edx\npush %eax\n");
+    SET_DS(0x10);
     
-    if((tick % 10) && canPreempt) { // Switch task
+    if(canPreempt) { // Switch task
         const int currentProcessIndex = getCurrentProcessIdx();
-        const int nextProcessIndex = getNextProcess();
-        if(nextProcessIndex == -1) goto exit;
 
+        const int nextProcessIndex = getNextProcess();
+        if(nextProcessIndex == -1) { // Error occured 3:
+            proc_ip = interruptFrame->ip;
+            proc_flags = interruptFrame->flags;
+            interruptFrame->ip = (uint32_t)trampoline;
+            interruptFrame->flags &= ~(1 << 9); // Do not re-enable interrupts
+            interruptFrame->cs = 0x08;
+            interruptFrame->ss = 0x10;
+            interruptFrame->sp = realTSS.esp0;
+            goto exit;
+        }
+        uint32_t *esp;
+        asm volatile("mov %%esp, %0" : "=r"(esp));
+
+        processes[currentProcessIndex].regs.eax = esp[0];
+        processes[currentProcessIndex].regs.edx = esp[1];
+        processes[currentProcessIndex].regs.ecx = esp[2];
+        processes[currentProcessIndex].regs.ebx = esp[3];
+        processes[currentProcessIndex].regs.esp = interruptFrame->sp;
+        processes[currentProcessIndex].regs.flags = interruptFrame->flags;
+        // serialSendString("Got IP: "); serialSendInt(interruptFrame->ip);
+        // serialSendString(" for process "); serialSendString(processes[currentProcessIndex].name); serialSend('\n');
+        
         setProcessPC(currentProcessIndex, (uint32_t)interruptFrame->ip);
-        interruptFrame->ip = getPCLoc(nextProcessIndex);
-        // interruptFrame->flags |= 0x200; // Set the interrupt flag (is that really needed?)
+        interruptFrame->ip = (uint32_t)trampoline;
+        
+        setLDTEntry(0, processes[nextProcessIndex].memStart, 0x1000, 0xFA, 0xCF);
+        setLDTEntry(1, processes[nextProcessIndex].memStart, 0x1000, 0xF2, 0xCF);
+        setLDTEntry(2, processes[nextProcessIndex].memStart - 4096, 4096, 0xF2, 0xCF);
+        asm volatile("lldt %0" : : "r"(0x1B)); // Reload the LDT to avoid some weird CPU shittery; selector 0x18 for ring 0
+        
+        // Restore the registers
+        proc_regs_eax = processes[nextProcessIndex].regs.eax;
+        proc_regs_edx = processes[nextProcessIndex].regs.edx;
+        proc_regs_ecx = processes[nextProcessIndex].regs.ecx;
+        proc_regs_ebx = processes[nextProcessIndex].regs.ebx;
+        proc_regs_esp = processes[nextProcessIndex].regs.esp;
+        // LDT stuff
+        // interruptFrame->cs = 0x04;
+        interruptFrame->flags &= ~(1 << 9); // Do not re-enable interrupts
+        proc_flags = processes[nextProcessIndex].regs.flags;
+        proc_ip = processes[nextProcessIndex].pcLoc;
+
+        interruptFrame->cs = 0x08;
+        interruptFrame->ss = 0x10;
+        interruptFrame->sp = realTSS.esp0;
     }
 
     exit:
+    asm volatile("pop %eax\npop %edx\npop %ecx\npop %ebx\n");
     tick++;
     outb(0x20, 0x20);
-    STI();
+    if(!canPreempt) SET_DS(0x0C);
 }
 
 void sleep(uint32_t t) {

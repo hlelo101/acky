@@ -3,6 +3,7 @@
 GDTR gdtr;
 gdtDescriptor gdt[NUM_GDT_ENTRIES];
 gdtDescriptor currentLDT[NUM_LDT_ENTRIES];
+tss realTSS;
 
 void setGDTEntry(int index, uint32_t base, uint32_t limit, uint8_t access, uint8_t granularity) {
     gdt[index].baseLow = (base & 0xFFFF);
@@ -22,26 +23,22 @@ void setLDTEntry(int index, uint32_t base, uint32_t limit, uint8_t access, uint8
     currentLDT[index].access = access;
 }
 
-void updateLDTBase(uint32_t newBase) {
-    for(int i = 0; i < NUM_LDT_ENTRIES; i++) {
-        currentLDT[i].baseLow = (newBase & 0xFFFF);
-        currentLDT[i].baseMiddle = (newBase >> 16) & 0xFF;
-        currentLDT[i].baseHigh = (newBase >> 24) & 0xFF;
-    }
-}
-
-
-
 void initGDT() {
     // Set up the initial LDT
-    setLDTEntry(0, 0, 0x100, 0x9A, 0xCF); // Code segment
-    setLDTEntry(1, 0, 0x100, 0x92, 0xCF); // Data segment
-
+    setLDTEntry(0, 0, 0x1000, 0xFA, 0xCF);                                      // Code segment; 0x9A for ring 0
+    setLDTEntry(1, 0, 0x1000, 0xF2, 0xCF);                                      // Data segment; 0x92 for ring 0
+    setLDTEntry(2, 0, 4096, 0xF2, 0xCF);                                        // Data segment for the process' stack
     // Set up the GDT
-    setGDTEntry(0, 0, 0, 0, 0); // Null segment
-    setGDTEntry(1, 0, 0x03FF, 0x9A, 0xCF); // Code segment
-    setGDTEntry(2, 0, 0xFFFF, 0x92, 0xCF); // Data segment
-    setGDTEntry(3, (uint32_t)&currentLDT, sizeof(currentLDT) - 1, 0x82, 0xCF); // LDT segment
+    setGDTEntry(0, 0, 0, 0, 0);                                                 // Null segment
+    setGDTEntry(1, 0, 0xFFFF, 0x9A, 0xCF);                                      // Code segment
+    setGDTEntry(2, 0, 0xFFFF, 0x92, 0xCF);                                      // Data segment
+    setGDTEntry(3, (uint32_t)&currentLDT, sizeof(currentLDT) - 1, 0xE2, 0xCF);  // LDT segment; 0x82 for ring 0
+    setGDTEntry(5, 0x300000, 0xFFFF, 0xFA, 0xCF);                               // Ring 3 code segment
+    setGDTEntry(6, 0x300000, 0xFFFF, 0xF2, 0xCF);                               // Ring 3 data segment
+    // TSS
+    asm volatile("movl %%esp, %0" : "=r"(realTSS.esp0));
+    realTSS.ss0 = 0x10;
+    setGDTEntry(4, (uint32_t)&realTSS, sizeof(realTSS) - 1, 0x89, 0x00);
 
     // The GDTR
     gdtr.size = sizeof(gdt) - 1;
@@ -63,5 +60,6 @@ void initGDT() {
         : : : "%ax"
     );
 
-    asm volatile("lldt %0" : : "r"(3 * 8));
+    asm volatile("lldt %0" : : "r"(0x18)); // LDT
+    asm volatile("ltr %0" : : "r" (0x20)); // TSS
 }

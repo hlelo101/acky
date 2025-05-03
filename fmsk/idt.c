@@ -4,6 +4,9 @@
 #include "herr.h"
 #include "pit.h"
 #include "utils.h"
+#include "serial.h"
+#include "faultHandlers.h"
+#include "process.h"
 
 gate idt[256];
 idtrDesc idtr;
@@ -38,86 +41,6 @@ void setIDTGate(int index, uint32_t address, uint16_t selector, uint8_t flags) {
     idt[index].flags = flags;
 }
 
-void dividErr() {
-    herr("Division by 0");
-}
-
-void debugErr() {
-    herr("Debug");
-}
-
-void nmIntErr() {
-    herr("Non maskable interrupt");
-}
-
-void breakErr() {
-    herr("Breakpoint");
-}
-
-void overflowErr() {
-    herr("Overflow");
-}
-
-void boundsCheckErr() {
-    herr("Bounds check");
-}
-
-void invalidOpcodeErr() {
-    herr("Invalid opcode");
-}
-
-void devNotAvailErr() {
-    herr("Device not available");
-}
-
-void doubleFaultErr() {
-    herr("Double fault");
-}
-
-void coprocSegOverrunErr() {
-    herr("Coprocessor segment overrun");
-}
-
-void invalidTSSErr() {
-    herr("Invalid TSS");
-}
-
-void segNotPresentErr() {
-    herr("Segment not present");
-}
-
-void stackFaultErr() {
-    herr("Stack fault");
-}
-
-void genProtFaultErr() {
-    herr("General protection fault");
-}
-
-void pageFaultErr() {
-    herr("Page fault");
-}
-
-void reservedErr() {
-    herr("Unknown (Reserved)");
-}
-
-void fpuErr() {
-    herr("FPU Error");
-}
-
-void alignCheckErr() {
-    herr("Alignment check");
-}
-
-void machineCheckErr() {
-    herr("Machine check");
-}
-
-void simdErr() {
-    herr("SIMD Floating-Point Exception");
-}
-
 // That weird IRQ7
 __attribute__((interrupt)) void IRQ7(struct interrupt_frame *interruptFrame __attribute__((unused))) {
     outb(0x20, 0x0B);
@@ -126,14 +49,44 @@ __attribute__((interrupt)) void IRQ7(struct interrupt_frame *interruptFrame __at
 
     outb(0xA0, 0x0B);
     outb(0x20, 0x0B);
+
+    SET_DS(0x0F);
 }
 
-__attribute__((interrupt)) void printService(struct interrupt_frame *interruptFrame __attribute__((unused))) {
-    CLI();
-    unsigned char c;
-    asm volatile ("mov %%al, %0" : "=r" (c));
-    printChar(c);
-    STI();
+__attribute__((interrupt)) void sysCall(struct interruptFrame *interruptFrame __attribute__((unused))) {
+    asm volatile("push %eax");
+    SET_DS(0x10);
+    SET_ES(0x10);
+    asm volatile("pop %eax");
+
+    // Get the register contents
+    generalRegs options;
+    asm volatile("mov %%eax, %0" : "=r"(options.eax));
+    asm volatile("mov %%ebx, %0" : "=r"(options.ebx));
+    asm volatile("mov %%ecx, %0" : "=r"(options.ecx));
+    asm volatile("mov %%edx, %0" : "=r"(options.edx));
+
+    switch(options.eax) {
+        case 0:
+            char c = (char)(options.ebx & 0xFF);
+            printChar(c);
+            break;
+        default:
+            // Invalid syscall
+            print("[Warning]: Invalid system call\n");
+            break;
+    }
+    
+    SET_DS(0x0F);
+    SET_ES(0x0F);
+    // setTrampoline(interruptFrame);
+}
+
+void setTrampoline(struct interruptFrame *interruptFrame) {
+    proc_ip = interruptFrame->ip;
+    proc_flags = interruptFrame->flags;
+    interruptFrame->ip = (uint32_t)trampoline;
+    interruptFrame->flags &= ~(1 << 9);
 }
 
 void initIDT() {
@@ -163,14 +116,14 @@ void initIDT() {
     setIDTGate(19, (uint32_t)simdErr, 0x08, 0x8F);
     for(int i = 20; i<=31; i++) setIDTGate(i, (uint32_t)reservedErr, 0x08, 0x8F);
 
-    setIDTGate(0x21, (uint32_t)ps2KBDISR, 0x08, 0x8E);  // Keyboard
-    setIDTGate(0x20, (uint32_t)PITISR, 0x08, 0x8E);  // Timer
-    setIDTGate(0x27, (uint32_t)IRQ7, 0x08, 0x8E);  // Fucking IRQ7 that triggers for no fucking reason why the fuck are you redundant you stupid motherfu-
-    setIDTGate(0x40, (uint32_t)printService, 0x08, 0x8E);  // Printy print
+    setIDTGate(0x21, (uint32_t)ps2KBDISR, 0x08, 0x8E);      // Keyboard
+    setIDTGate(0x20, (uint32_t)PITISR, 0x08, 0x8E);         // Timer
+    setIDTGate(0x27, (uint32_t)IRQ7, 0x08, 0xEE);           // Fucking IRQ7 that triggers for no fucking reason why the fuck are you redundant you stupid motherfu-
+    setIDTGate(0x40, (uint32_t)sysCall, 0x08, 0xEE);        // System calls; flags=0x8E for ring 0
     // Load!
     __asm__ __volatile__ ("lidtl (%0)" :: "r" (&idtr));
 
-    // Enable IRQ1
+    // Enable IRQ1 and IRQ0s
     PICMap(0x20, 0x28, 0xFC, 0xFF);
-    __asm__ __volatile__ ("sti");
+    asm volatile ("sti");
 }

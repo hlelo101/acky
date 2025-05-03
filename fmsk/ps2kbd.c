@@ -19,7 +19,10 @@ char scancodeToChar(const int scancode, bool upperCase) {
     else return tableLower[scancode + 1];
 }
 
-__attribute__((interrupt)) void ps2KBDISR(struct interrupt_frame *interruptFrame __attribute__((unused))) {
+__attribute__((interrupt)) void ps2KBDISR(struct interruptFrame *interruptFrame __attribute__((unused))) {
+    SET_DS(0x10);
+    SET_ES(0x10);
+    
     const int scanCode = inb(0x60);
     // You like making key tables don't you?
     //printInt(scanCode); printChar('|');
@@ -75,4 +78,7 @@ __attribute__((interrupt)) void ps2KBDISR(struct interrupt_frame *interruptFrame
 
     if(kPressed && altPressed && leftCtrlPressed && leftShift) print(" # WIP; Kernel key # ");
     outb(0x20, 0x20);
+
+    SET_DS(0x0F);
+    SET_ES(0x0F);
 }

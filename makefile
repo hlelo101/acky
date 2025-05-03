@@ -2,7 +2,8 @@ CC = ~/opt/cross/bin/i386-elf-gcc
 CFLAGS = -ffreestanding -O2 -Wall -Wextra -nostdlib -mno-80387 -lgcc -c
 LDFLAGS = -T linker.ld -o fmsos.bin -ffreestanding -O2 -nostdlib -lgcc
 AS = nasm
-ASFLAGS = -felf32
+ASFLAGS = -f bin
+OBJS = ct/boot.o ct/kmain.o ct/vga.o ct/io.o ct/memory.o ct/gdt.o ct/idt.o ct/ps2kbd.o ct/herr.o ct/pit.o ct/ata.o ct/serial.o ct/fs.o ct/process.o ct/pitasm.o ct/faultHandlers.o
 
 QEMUCMD = qemu-system-i386 -drive file=fmsos.iso,format=raw,media=disk -m 124 -serial stdio -display gtk,zoom-to-fit=on
 
@@ -11,8 +12,8 @@ all: build userspace mkiso clean
 build:
 	mkdir ct
 
-	$(AS) $(ASFLAGS) multiboot.asm -o ct/boot.o
-	# $(AS) $(ASFLAGS) fmsk/gdt.asm -o ct/gdt.o
+	$(AS) -felf32 multiboot.asm -o ct/boot.o
+	$(AS) -felf32 fmsk/pit.asm -o ct/pitasm.o
 
 	$(CC) $(CFLAGS) fmsk/kmain.c -o ct/kmain.o
 	$(CC) $(CFLAGS) fmsk/gdt.c -o ct/gdt.o
@@ -27,8 +28,9 @@ build:
 	$(CC) $(CFLAGS) fmsk/serial.c -o ct/serial.o
 	$(CC) $(CFLAGS) fmsk/fs.c -o ct/fs.o
 	$(CC) $(CFLAGS) fmsk/process.c -o ct/process.o
+	$(CC) $(CFLAGS) fmsk/faultHandlers.c -o ct/faultHandlers.o
 
-	$(CC) $(LDFLAGS) ct/boot.o ct/kmain.o ct/vga.o ct/io.o ct/memory.o ct/gdt.o ct/idt.o ct/ps2kbd.o ct/herr.o ct/pit.o ct/ata.o ct/serial.o ct/fs.o ct/process.o
+	$(CC) $(LDFLAGS) $(OBJS)
 	stat fmsos.bin
 
 mkiso:
@@ -36,8 +38,8 @@ mkiso:
 	cp grub.cfg iso/boot/grub/grub.cfg
 	cp fmsos.bin iso/boot/
 
-	mkdir iso/apps
-	cp ct/*.bin iso/apps/
+	mkdir iso/ackysys
+	cp ct/*.bin iso/ackysys/
 
 	echo "Hai! Test" > iso/test.txt
 	grub-mkrescue -o fmsos.iso iso
@@ -45,7 +47,7 @@ mkiso:
 userspace:
 	$(AS) $(ASFLAGS) apps/kproc.asm -o ct/kproc.bin
 
-	$(AS) $(ASFLAGS) apps/test.asm -o ct/test.bin
+	$(AS) $(ASFLAGS) apps/init.asm -o ct/init.bin
 	$(AS) $(ASFLAGS) apps/test2.asm -o ct/test2.bin
 	$(AS) $(ASFLAGS) apps/test3.asm -o ct/test3.bin
 

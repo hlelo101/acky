@@ -2,4 +2,6 @@ megs: 512
 ata0-master: type=disk,path=fmsos.iso,status=inserted
 boot: disk
 display_library: x, options = "gui_debug"
-# com1: enabled=1, mode=term, dev=/dev/tty9
+magic_break: enabled = 1
+com1: enabled=1, mode=file, dev=serial.txt
+clock: sync=realtime, time0=local

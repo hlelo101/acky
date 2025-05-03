@@ -34,19 +34,21 @@ void kmain(multiboot_info_t* mbd, uint32_t magic) {
     initSerial();
     serialSendString("Kernel initialization started. Version " VERSION "\n");
     initGDT();
-    initPIT(1000);
+    initPIT(10000);
     initIDT();
     ataInit();
     initFS();
     enableCursor(9, 11);
     initMem();
     
-    spawnProcess("Kernel", "A:/APPS/KPROC.BIN");
+    spawnProcess("Kernel", "A:/ACKYSYS/KPROC.BIN");
 
-    spawnProcess("Test Process 1", "A:/APPS/TEST.BIN");
-    //spawnProcess("Test Process 2", "A:/APPS/TEST2.BIN");
-    spawnProcess("Test Process 3", "A:/APPS/TEST3.BIN");
-    serialSendString("Processes spawned\n");
+    // spawnProcess("Test 2", "A:/ACKYSYS/TEST2.BIN");
+    // spawnProcess("Test 3", "A:/ACKYSYS/TEST3.BIN");
+
+    spawnProcess("Init", "A:/ACKYSYS/INIT.BIN");
+
+    serialSendString("[kmain]: Processes spawned\n");
 
     canPreempt = true;
     while(1);
