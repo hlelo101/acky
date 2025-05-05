@@ -53,11 +53,13 @@ __attribute__((interrupt)) void IRQ7(struct interrupt_frame *interruptFrame __at
     SET_DS(0x0F);
 }
 
-__attribute__((interrupt)) void sysCall(struct interruptFrame *interruptFrame __attribute__((unused))) {
+__attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attribute__((unused))) {
+    asm volatile("push %ebx\npush %ecx\npush %edx\npush %eax\n");
     asm volatile("push %eax");
     SET_DS(0x10);
     SET_ES(0x10);
     asm volatile("pop %eax");
+    uint32_t syscallReturn = SRET_SUCCESS;
 
     // Get the register contents
     generalRegs options;
@@ -67,19 +69,69 @@ __attribute__((interrupt)) void sysCall(struct interruptFrame *interruptFrame __
     asm volatile("mov %%edx, %0" : "=r"(options.edx));
 
     switch(options.eax) {
-        case 0:
+        case 0: // Print character
             char c = (char)(options.ebx & 0xFF);
             printChar(c);
             break;
+        case 1: // Get user input
+            // Check the buffer (address in EBX)
+            if(options.ebx > (uint32_t)processes[schedulerProcessAt].memSize) {
+                serialSendString("[Warning]: Invalid memory access\n");
+                syscallReturn = SRET_ERROR;
+                break;
+            }
+
+            processBufferLoc = (char *)(options.ebx + processes[schedulerProcessAt].memStart); // Convert the process' offset to the real one
+            processWaitingForInput = true;
+            processes[schedulerProcessAt].waiting = true;
+            inputWaintingPID = schedulerProcessAt;
+
+            asm volatile("pop %eax\nmov %eax, 0\npop %edx\npop %ecx\npop %ebx\n"); // I mean yeah you can consider this black magic but... you know, it works
+            asm volatile("jmp PITISR");
+            break;
+        case 2: // Spawn process
+            // EBX = path, ECX = name
+            if(options.ebx > (uint32_t)processes[schedulerProcessAt].memSize) {
+                serialSendString("[Warning]: Invalid memory access\n");
+                syscallReturn = SRET_ERROR;
+                break;
+            }
+            char *path = (char *)(options.ebx + processes[schedulerProcessAt].memStart);
+            char *name = (char *)(options.ecx + processes[schedulerProcessAt].memStart);
+            FSsetSTI = false;
+            int processIndex = spawnProcess(name, path);
+            FSsetSTI = true;
+            if(processIndex == -1) {
+                serialSendString("[Warning]: Failed to spawn process\n");
+                syscallReturn = SRET_ERROR;
+                break;
+            }
+            break;
+        case 3: // Exit
+            kill(schedulerProcessAt);
+            asm volatile("pop %eax\nmov %eax, 0\npop %edx\npop %ecx\npop %ebx\n");
+            asm volatile("jmp PITISR");
+            break;
         default:
             // Invalid syscall
-            print("[Warning]: Invalid system call\n");
+            serialSendString("[Warning]: Invalid system call\n");
+            syscallReturn = SRET_ERROR;
             break;
     }
-    
     SET_DS(0x0F);
     SET_ES(0x0F);
-    // setTrampoline(interruptFrame);
+    asm volatile(
+        "pop %%eax\n"
+        "mov %0, %%eax\n"
+        "pop %%edx\n"
+        "pop %%ecx\n"
+        "pop %%ebx\n"
+        "iret"
+        :
+        : "r"(syscallReturn)
+        : "eax", "edx", "ecx", "ebx"
+    );
+    
 }
 
 void setTrampoline(struct interruptFrame *interruptFrame) {

@@ -9,11 +9,12 @@ int createProcessEntry(const char *name, uint32_t fileSize) {
     processes[processCount].pcLoc = 0;
     processes[processCount].regs.flags = 0x3206; // 0x206 for ring 0
     processes[processCount].regs.esp = 4096;
+    processes[processCount].regs.ebp = 4096;
     processes[processCount].waiting = false;
     processes[processCount].memStart = allocMem(fileSize);
     serialSendString("[createProcessEntry()]: New process \""); serialSendString(name);
     serialSendString("\" , memory allocated at: "); serialSendInt(processes[processCount].memStart); serialSend('\n');
-    processes[processCount].memSize = DEFAULT_PROCESS_MEMSIZE;
+    processes[processCount].memSize = fileSize;
     processCount++;
     
     return processCount - 1;
@@ -47,11 +48,11 @@ void setProcessPC(int idx, uint32_t pc) {
 }
 
 int spawnProcess(const char *name, const char *path) {
-    uint8_t processBuffer[2048] = {0};
     fileInfo info;
-    fsReadFile(path, processBuffer, &info);
+    if(fsGetFileInfo(path, &info) == -1) return -1; // File not found
+    uint8_t processBuffer[info.size < 2048 ? 2048 : info.size];
 
-    if(processBuffer[0] == 0) return -1; // File not found
+    fsReadFile(path, processBuffer, &info);
     int processIndex = createProcessEntry(name, info.size);
     memcpy((void *)processes[processIndex].memStart, processBuffer, 2048);
 

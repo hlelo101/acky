@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <stdbool.h>
 
 #define PIT_CH0_DATA 0x40
 #define PIT_CH1_DATA 0x41
@@ -26,3 +27,4 @@ extern uint32_t proc_regs_ebx;
 extern uint32_t proc_regs_ecx;
 extern uint32_t proc_regs_edx;
 extern uint32_t proc_regs_esp;
+extern uint32_t proc_regs_ebp;

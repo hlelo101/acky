@@ -53,7 +53,7 @@ void printChar(const char c) {
             video_mem += 80*2-column;
             break;
         case '\b':
-            if(*(video_mem - 2) == ' ') {
+            if(*(video_mem - 2) == ' ' && (((uint32_t)video_mem / 2) % 80 == 0)) {
                 while(*video_mem == ' ') video_mem -= 2;
                 video_mem += 2; /// aaagh
             } else video_mem -= 2;

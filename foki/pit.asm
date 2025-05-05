@@ -7,6 +7,7 @@ global proc_regs_ebx
 global proc_regs_ecx
 global proc_regs_edx
 global proc_regs_esp
+global proc_regs_ebp
 
 trampoline:
     mov eax, [proc_regs_eax]
@@ -25,7 +26,7 @@ trampoline:
 
     pop eax
 
-    mov ebp, 4096
+    mov ebp, cs:[proc_regs_ebp]
     ; NOTE: Stack segment selector is 0x17
     push 0x17                       ; Set SS
     push dword cs:[proc_regs_esp]   ; Set ESP
@@ -42,3 +43,4 @@ proc_regs_ebx dd 0
 proc_regs_ecx dd 0
 proc_regs_edx dd 0
 proc_regs_esp dd 0
+proc_regs_ebp dd 0

@@ -3,119 +3,159 @@
 __attribute__((interrupt)) void dividErr(struct interruptFrame *interruptFrame) {
     SET_DS(0x10);
     SET_ES(0x10);
-    herr2("Division by 0", interruptFrame->ip);
+    intHerr("Division by 0", interruptFrame);
+    SET_DS(0x0F);
+    SET_ES(0x0F);
 }
 
 __attribute__((interrupt)) void debugErr(struct interruptFrame *interruptFrame) {
     SET_DS(0x10);
     SET_ES(0x10);
-    herr2("Debug", interruptFrame->ip);
+    intHerr("Debug", interruptFrame);
+    SET_DS(0x0F);
+    SET_ES(0x0F);
 }
 
 __attribute__((interrupt)) void nmIntErr(struct interruptFrame *interruptFrame) {
     SET_DS(0x10);
     SET_ES(0x10);
-    herr2("Non maskable interrupt", interruptFrame->ip);
+    intHerr("Non maskable interrupt", interruptFrame);
+    SET_DS(0x0F);
+    SET_ES(0x0F);
 }
 
 __attribute__((interrupt)) void breakErr(struct interruptFrame *interruptFrame) {
     SET_DS(0x10);
     SET_ES(0x10);
-    herr2("Breakpoint", interruptFrame->ip);
+    intHerr("Breakpoint", interruptFrame);
+    SET_DS(0x0F);
+    SET_ES(0x0F);
 }
 
 __attribute__((interrupt)) void overflowErr(struct interruptFrame *interruptFrame) {
     SET_DS(0x10);
     SET_ES(0x10);
-    herr2("Overflow", interruptFrame->ip);
+    intHerr("Overflow", interruptFrame);
+    SET_DS(0x0F);
+    SET_ES(0x0F);
 }
 
 __attribute__((interrupt)) void boundsCheckErr(struct interruptFrame *interruptFrame) {
     SET_DS(0x10);
     SET_ES(0x10);
-    herr2("Bounds check", interruptFrame->ip);
+    intHerr("Bounds check", interruptFrame);
+    SET_DS(0x0F);
+    SET_ES(0x0F);
 }
 
 __attribute__((interrupt)) void invalidOpcodeErr(struct interruptFrame *interruptFrame) {
     SET_DS(0x10);
     SET_ES(0x10);
-    herr2("Invalid opcode", interruptFrame->ip);
+    intHerr("Invalid opcode", interruptFrame);
+    SET_DS(0x0F);
+    SET_ES(0x0F);
 }
 
 __attribute__((interrupt)) void devNotAvailErr(struct interruptFrame *interruptFrame) {
     SET_DS(0x10);
     SET_ES(0x10);
-    herr2("Device not available", interruptFrame->ip);
+    intHerr("Device not available", interruptFrame);
+    SET_DS(0x0F);
+    SET_ES(0x0F);
 }
 
 __attribute__((interrupt)) void doubleFaultErr(struct interruptFrame *interruptFrame) {
     SET_DS(0x10);
     SET_ES(0x10);
-    herr2("Double fault", interruptFrame->ip);
+    intHerr("Double fault", interruptFrame);
+    SET_DS(0x0F);
+    SET_ES(0x0F);
 }
 
 __attribute__((interrupt)) void coprocSegOverrunErr(struct interruptFrame *interruptFrame) {
     SET_DS(0x10);
     SET_ES(0x10);
-    herr2("Coprocessor segment overrun", interruptFrame->ip);
+    intHerr("Coprocessor segment overrun", interruptFrame);
+    SET_DS(0x0F);
+    SET_ES(0x0F);
 }
 
 __attribute__((interrupt)) void invalidTSSErr(struct interruptFrame *interruptFrame) {
     SET_DS(0x10);
     SET_ES(0x10);
-    herr2("Invalid TSS", interruptFrame->ip);
+    intHerr("Invalid TSS", interruptFrame);
+    SET_DS(0x0F);
+    SET_ES(0x0F);
 }
 
 __attribute__((interrupt)) void segNotPresentErr(struct interruptFrame *interruptFrame) {
     SET_DS(0x10);
     SET_ES(0x10);
-    herr2("Segment not present", interruptFrame->ip);
+    intHerr("Segment not present", interruptFrame);
+    SET_DS(0x0F);
+    SET_ES(0x0F);
 }
 
 __attribute__((interrupt)) void stackFaultErr(struct interruptFrame *interruptFrame) {
     SET_DS(0x10);
     SET_ES(0x10);
-    herr2("Stack fault", interruptFrame->ip);
+    intHerr("Stack fault", interruptFrame);
+    SET_DS(0x0F);
+    SET_ES(0x0F);
 }
 
 __attribute__((interrupt)) void genProtFaultErr(struct interruptFrame *interruptFrame) {
     SET_DS(0x10);
     SET_ES(0x10);
-    herr2("General protection fault", interruptFrame->ip);
+    intHerr("General protection fault", interruptFrame);
+    SET_DS(0x0F);
+    SET_ES(0x0F);
 }
 
 __attribute__((interrupt)) void pageFaultErr(struct interruptFrame *interruptFrame) {
     SET_DS(0x10);
     SET_ES(0x10);
-    herr2("Page fault", interruptFrame->ip);
+    intHerr("Page fault", interruptFrame);
+    SET_DS(0x0F);
+    SET_ES(0x0F);
 }
 
 __attribute__((interrupt)) void reservedErr(struct interruptFrame *interruptFrame) {
     SET_DS(0x10);
     SET_ES(0x10);
-    herr2("Unknown (Reserved)", interruptFrame->ip);
+    intHerr("Unknown (Reserved)", interruptFrame);
+    SET_DS(0x0F);
+    SET_ES(0x0F);
 }
 
 __attribute__((interrupt)) void fpuErr(struct interruptFrame *interruptFrame) {
     SET_DS(0x10);
     SET_ES(0x10);
-    herr2("FPU Error", interruptFrame->ip);
+    intHerr("FPU Error", interruptFrame);
+    SET_DS(0x0F);
+    SET_ES(0x0F);
 }
 
 __attribute__((interrupt)) void alignCheckErr(struct interruptFrame *interruptFrame) {
     SET_DS(0x10);
     SET_ES(0x10);
-    herr2("Alignment check", interruptFrame->ip);
+    intHerr("Alignment check", interruptFrame);
+    SET_DS(0x0F);
+    SET_ES(0x0F);
 }
 
 __attribute__((interrupt)) void machineCheckErr(struct interruptFrame *interruptFrame) {
     SET_DS(0x10);
     SET_ES(0x10);
-    herr2("Machine check", interruptFrame->ip);
+    intHerr("Machine check", interruptFrame);
+    SET_DS(0x0F);
+    SET_ES(0x0F);
 }
 
 __attribute__((interrupt)) void simdErr(struct interruptFrame *interruptFrame) {
     SET_DS(0x10);
     SET_ES(0x10);
-    herr2("SIMD Floating-Point Exception", interruptFrame->ip);
+    intHerr("SIMD Floating-Point Exception", interruptFrame);
+    SET_DS(0x0F);
+    SET_ES(0x0F);
 }

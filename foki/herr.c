@@ -24,8 +24,9 @@ void herr(const char *str) {
     while(1) asm volatile("hlt");
 }
 
-void herr2(const char *str, const int eip) {
+void intHerr(const char *str, struct interruptFrame *interruptFrame) {
     CLI();
+    asm volatile("push %eax\npush %edx\npush %ecx\npush %ebx\n");
 
     setColorAttribute(0x4C);
     clearScr();
@@ -42,7 +43,18 @@ void herr2(const char *str, const int eip) {
     print("  ECX: "); printInt(esp[2]); printChar('\n');
     print("  EBX: "); printInt(esp[3]); printChar('\n');
 
-    print("EIP: "); printInt(eip); printChar('\n');
+    print("EIP: "); printInt(interruptFrame->ip); printChar('\n');
+    print("CS: "); printInt(interruptFrame->cs); printChar('\n');
+    // if(interruptFrame->ip < 0x10000) {
+    //     kill(schedulerProcessAt);
+    //     interruptFrame->cs = 0x07;
+    //     interruptFrame->ss = 0x17;
+    //     asm volatile("pop %ebx\npop %ecx\npop %edx\npop %eax\n");
+    //     return;
+    // }
+
+    asm volatile("pop %ebx\npop %ecx\npop %edx\npop %eax\n");
+
 
     disableCursor();
 

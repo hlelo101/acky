@@ -3,6 +3,7 @@
 #include "pit.h"
 #include "serial.h"
 #include "vga.h"
+#include "fs.h"
 
 bool primaryMasterPresent = false;
 bool primarySlavePresent = false;
@@ -19,7 +20,7 @@ void ataWaitReady() {
 }
 
 void ataIdentify(bool master) {
-    CLI();
+    if(FSsetSTI) CLI();
     // Select drive
     outb(PRIMARY + 6, master ? 0xA0 : 0xB0);
     // Set sectorcount, LBAlo, LBAmid, and LBAhi to 0
@@ -34,7 +35,7 @@ void ataIdentify(bool master) {
         else serialSendString("[ATA]: Slave drive not found\n");
         if(master) primaryMasterPresent = false;
         else primarySlavePresent = false;
-        STI();
+        if(FSsetSTI) STI();
         return;
     }
     ataWait();
@@ -48,7 +49,7 @@ void ataIdentify(bool master) {
         else serialSendString("[ATA]: Slave drive not found\n");
         if(master) primaryMasterPresent = false;
         else primarySlavePresent = false;
-        STI();
+        if(FSsetSTI) STI();
         return;
     }
     // Extract some useful info from the data
@@ -64,14 +65,14 @@ void ataIdentify(bool master) {
         primarySlavePresent = true;
         serialSendString("[ATA]: Slave drive found\n");
     }
-    STI();
+    if(FSsetSTI) STI();
 }
 
 void ataRead(bool master, uint16_t *buffer, uint64_t lba, uint16_t sectorCount) {
     if(master && !primaryMasterPresent) return;
     else if(!master && !primarySlavePresent) return;
 
-    CLI();
+    if(FSsetSTI) CLI();
     // Send the data and commands
     outb(PRIMARY + 6, master ? 0x40 : 0x50);
 
@@ -93,7 +94,7 @@ void ataRead(bool master, uint16_t *buffer, uint64_t lba, uint16_t sectorCount) 
         for(int j = 0; j < 256; j++) buffer[i * 256 + j] = inw(PRIMARY);
         ataWait();
     }
-    STI();
+    if(FSsetSTI) STI();
 }
 
 int boolToInt(bool b) {

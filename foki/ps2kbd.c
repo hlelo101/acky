@@ -1,7 +1,4 @@
 #include "ps2kbd.h"
-#include "io.h"
-#include "vga.h"
-#include <stdbool.h>
 
 bool leftShift = false;
 bool rightShift = false;
@@ -11,6 +8,11 @@ bool capsLock = false;
 bool altPressed = false; // 56, 184
 bool leftCtrlPressed = false; // 29, 157
 bool kPressed = false; // 37, 165
+
+char *processBufferLoc = 0;
+int processBufferPos = 0;
+bool processWaitingForInput = false;
+int inputWaintingPID = 0;
 
 char scancodeToChar(const int scancode, bool upperCase) {
     const char tableUpper[] = "   1234567890°+ AZERTYUIOP¨£QSDFGHJKLM\% µWXCVBN?./§     ";
@@ -29,7 +31,14 @@ __attribute__((interrupt)) void ps2KBDISR(struct interruptFrame *interruptFrame 
     
     switch(scanCode) {
         case 28: // Enter
-            printChar('\n');
+            if(processWaitingForInput) {
+                processWaitingForInput = false;
+                processes[inputWaintingPID].waiting = false;
+                processBufferLoc[processBufferPos] = '\0'; // Null terminate the string
+                processBufferPos = 0;
+
+                printChar('\n');
+            }
             break;
         case 58: // Caps lock
             capsLock = !capsLock;
@@ -47,7 +56,10 @@ __attribute__((interrupt)) void ps2KBDISR(struct interruptFrame *interruptFrame 
             leftShift = false;
             break;
         case 14: // Return
-            printChar('\b');
+            if((processBufferPos > 0) && processWaitingForInput) {
+                processBufferLoc[--processBufferPos] = '\0';
+                printChar('\b');
+            }
             break;
         case 56: // Alt pressed
             altPressed = true;
@@ -70,10 +82,16 @@ __attribute__((interrupt)) void ps2KBDISR(struct interruptFrame *interruptFrame 
             [[fallthrough]];
         default:
             if(scanCode & 0x80) {
+                SET_DS(0x0F);
+                SET_ES(0x0F);
                 outb(0x20, 0x20);
                 return;
             }
-            printChar(scancodeToChar(scanCode, capsLock || leftShift || rightShift));
+            char c = scancodeToChar(scanCode, capsLock || leftShift || rightShift);
+            if(processWaitingForInput) {
+                processBufferLoc[processBufferPos++] = c;
+                printChar(c);
+            }
     }
 
     if(kPressed && altPressed && leftCtrlPressed && leftShift) print(" # WIP; Kernel key # ");

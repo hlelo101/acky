@@ -1,3 +1,4 @@
+#pragma once
 #include <stdint.h>
 #include <stdbool.h>
 #include "memory.h"
@@ -12,6 +13,7 @@ typedef struct {
     uint32_t ecx;
     uint32_t edx;
     uint32_t esp;
+    uint32_t ebp;
     uint32_t flags;
 } generalRegs;
 
@@ -32,3 +34,4 @@ void setProcessPC(int idx, uint32_t pc);
 int getCurrentProcessIdx();
 uint32_t getPCLoc(int idx);
 void kill(int idx);
+extern int schedulerProcessAt;

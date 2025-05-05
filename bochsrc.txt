@@ -1,7 +1,8 @@
 megs: 512
-ata0-master: type=disk,path=fmsos.iso,status=inserted
+ata0-master: type=disk,path=acky.iso,status=inserted
 boot: disk
 display_library: x, options = "gui_debug"
 magic_break: enabled = 1
 com1: enabled=1, mode=file, dev=serial.txt
 clock: sync=realtime, time0=local
+keyboard: keymap=fr

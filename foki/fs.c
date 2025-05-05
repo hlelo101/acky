@@ -4,6 +4,8 @@
 drive drives[26];
 int driveCount = 0;
 
+bool FSsetSTI = true;
+
 void commonRead(const unsigned int loc, const unsigned int lba, const unsigned int count, uint8_t* buffer) {
     switch(loc) {
         case LOC_ATA_MASTER:
@@ -63,7 +65,7 @@ int getDriveIndexFromLetter(const char c) {
 }
 
 // A path should look something like this: "A:/folder/file.ext"
-void iso9660Read(const char *path, int idx, uint8_t *outputBuffer, fileInfo *info) {
+int iso9660Read(const char *path, int idx, uint8_t *outputBuffer, fileInfo *info) {
     // Process the path
     int pathSize = 0;
     while(path[pathSize] != '\0') pathSize++;
@@ -116,24 +118,98 @@ void iso9660Read(const char *path, int idx, uint8_t *outputBuffer, fileInfo *inf
             entryOffset += dirEntryLength;
         }
     }
-    if(!lastDirIsFile) return; // Not found
+    if(!lastDirIsFile) return -1; // Not found
 
     for(int i = 0; i<32; i++) info->name[i] = folderName[i];
     // Read the file
     commonRead(drives[idx].loc, lastFolderLoc, 1, buffer);
-    info->size = fileSize;
+    info->size = ((fileSize == 0) ? 2048 : fileSize);
     for(int i = 0; i < ((fileSize == 0) ? 2048 : fileSize); i++) outputBuffer[i] = buffer[i];
+
+    return 0;
 }
 
-void fsReadFile(const char *path, uint8_t *buffer, fileInfo *info) {
-    if(getDriveIndexFromLetter(path[0]) < 0) return;
+// A path should look something like this: "A:/folder/file.ext"
+int iso9660GetFileInfo(const char *path, int idx, fileInfo *info) {
+    // Process the path
+    int pathSize = 0;
+    while(path[pathSize] != '\0') pathSize++;
+    char processedPath[pathSize + 3];
+    strcpy(processedPath, path);
+    processedPath[pathSize] = ';';
+    processedPath[pathSize + 1] = '1';
+    processedPath[pathSize + 2] = '\0';
+
+    // Read the root folder location
+    uint8_t buffer[2048];
+    commonRead(drives[idx].loc, 16, 1, buffer);
+    // Root directory entry offset is 156
+    uint32_t lastFolderLoc = buffer[156 + 2] | (buffer[156 + 3] << 8) | (buffer[156 + 4] << 16) | (buffer[156 + 5] << 24);
+    uint8_t fileSize = 0;
+    bool lastDirIsFile = false;
+    // Go through each directories
+    int lastSlashOffset = 3;
+
+    // Get the target folder name
+    char folderName[32];
+    while(processedPath[lastSlashOffset] != '\0') {
+        int j = lastSlashOffset;
+        while(processedPath[j] != '/' && processedPath[j] != '\0') {
+            folderName[j - lastSlashOffset] = processedPath[j];
+            j++;
+        }
+        folderName[j - lastSlashOffset] = '\0';
+        lastSlashOffset = j + 1;
+
+        // At this point, we have the folder name, try to find it in the last dir by iterating through each entry
+        commonRead(drives[idx].loc, lastFolderLoc, 1, buffer);
+        int entryOffset = 0;
+        while(buffer[entryOffset] != 0) {
+            // Check the name
+            uint8_t dirEntryLength = buffer[entryOffset];
+            uint8_t nameLength = buffer[entryOffset + 32];
+            fileSize = buffer[entryOffset + 26];
+            char dirName[32] = {0};
+            memcpy(dirName, buffer + entryOffset + 33, nameLength);
+
+            // If the object is a file, it ends with ;1
+            if(dirName[nameLength - 2] == ';' && dirName[nameLength - 1] == '1') lastDirIsFile = true;
+            if(strcmp(dirName, folderName) == 0) {
+                // Found the folder, get the location
+                lastFolderLoc = buffer[entryOffset + 2] | (buffer[entryOffset + 3] << 8) | (buffer[entryOffset + 4] << 16) | (buffer[entryOffset + 5] << 24);
+                break;
+            }
+
+            entryOffset += dirEntryLength;
+        }
+    }
+    if(!lastDirIsFile) return -1; // Not found
+
+    for(int i = 0; i<32; i++) info->name[i] = folderName[i];
+    info->size = ((fileSize == 0) ? 2048 : fileSize);
+
+    return 0;
+}
+
+int fsReadFile(const char *path, uint8_t *buffer, fileInfo *info) {
+    if(getDriveIndexFromLetter(path[0]) < 0) return -1;
 
     switch(drives[getDriveIndexFromLetter(path[0])].type) {
         case FS_TYPE_ISO9660:
-            iso9660Read(path, getDriveIndexFromLetter(path[0]), buffer, info);
-            break;
+            return iso9660Read(path, getDriveIndexFromLetter(path[0]), buffer, info);
         default:
-            return;
+            return -1;
+    }
+}
+
+int fsGetFileInfo(const char *path, fileInfo *info) {
+    if(getDriveIndexFromLetter(path[0]) < 0) return -1;
+
+    switch(drives[getDriveIndexFromLetter(path[0])].type) {
+        case FS_TYPE_ISO9660:
+            return iso9660GetFileInfo(path, getDriveIndexFromLetter(path[0]), info);
+        default:
+            return -1;
     }
 }
 
