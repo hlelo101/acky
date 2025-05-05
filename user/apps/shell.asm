@@ -1,4 +1,8 @@
 [bits 32]
+db "Shell", 0, "                         ", 0
+dd loop
+db "AEF"
+
 loop:
     ; Clear uinput
     mov byte [uinput], 0
@@ -19,7 +23,6 @@ loop:
     ; Start the process
     mov eax, 2
     mov ebx, uinput
-    mov ecx, processName
     int 0x40
 
     ; Check if the process failed to start
@@ -54,7 +57,5 @@ print_string:
 	ret
 
 ps1 db 'Acky> ', 0
-processName db 'Shell-started', 0
 uinput times 210 db 0
-notFound db 'Program not found', 10, 0
-emptyMsg db 'Empty input', 10, 00
+notFound db '[!!]: Not found/Invalid executable format', 10, 0

@@ -90,16 +90,15 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
             asm volatile("jmp PITISR");
             break;
         case SC_SPAWNPROC: // Spawn process; EBX
-            // EBX = path, ECX = name
+            // EBX = path
             if(options.ebx > (uint32_t)processes[schedulerProcessAt].memSize) {
                 serialSendString("[Warning]: Invalid memory access\n");
                 syscallReturn = SRET_ERROR;
                 break;
             }
             char *path = (char *)(options.ebx + processes[schedulerProcessAt].memStart);
-            char *name = (char *)(options.ecx + processes[schedulerProcessAt].memStart);
             FSsetSTI = false;
-            const uint32_t newPID = spawnProcess(name, path);
+            const uint32_t newPID = spawnProcess(path);
             FSsetSTI = true;
             if(newPID == 0) {
                 serialSendString("[Warning]: Failed to spawn process\n");

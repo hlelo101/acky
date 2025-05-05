@@ -30,7 +30,7 @@ typedef struct {
 
 extern process processes[256];
 
-uint32_t spawnProcess(const char *name, const char *path);
+uint32_t spawnProcess(const char *path);
 int getNextProcess();
 void setProcessPC(int idx, uint32_t pc);
 int getCurrentProcessIdx();

@@ -56,14 +56,23 @@ void setProcessPC(int idx, uint32_t pc) {
     processes[idx].pcLoc = pc;
 }
 
-uint32_t spawnProcess(const char *name, const char *path) {
+uint32_t spawnProcess(const char *path) {
     fileInfo info;
     if(fsGetFileInfo(path, &info) == -1) return 0; // File not found
     uint8_t processBuffer[info.size < 2048 ? 2048 : info.size];
 
     fsReadFile(path, processBuffer, &info);
-    int processIndex = createProcessEntry(name, info.size);
-    memcpy((void *)processes[processIndex].memStart, processBuffer, 2048);
+    if(processBuffer[36] != 'A' && processBuffer[37] != 'E' && processBuffer[38] != 'S') {
+        serialSendString("[spawnProcess()]: Invalid process file format\n");
+        return 0;
+    }
+
+    int processIndex = createProcessEntry((char *)processBuffer, info.size);
+    // Get the entry point in the header
+    uint32_t *entryPoint = (uint32_t *)(processBuffer + 32);
+    processes[processIndex].pcLoc = *entryPoint;
+
+    memcpy((void *)processes[processIndex].memStart, processBuffer, info.size);
 
     return processes[processIndex].pid;
 }

@@ -41,12 +41,8 @@ void kmain(multiboot_info_t* mbd, uint32_t magic) {
     enableCursor(9, 11);
     initMem();
     
-    spawnProcess("Kernel", "A:/ACKYDAT/KPROC.ASA");
-
-    // spawnProcess("Test 2", "A:/ACKYSYS/TEST2.BIN");
-    // spawnProcess("Test 3", "A:/ACKYSYS/TEST3.BIN");
-
-    spawnProcess("Init", "A:/ACKYDAT/INIT.ASA");
+    spawnProcess("A:/ACKYDAT/KPROC.ASA");
+    spawnProcess("A:/ACKYDAT/INIT.ASA");
 
     serialSendString("[kmain]: Processes spawned\n");
 

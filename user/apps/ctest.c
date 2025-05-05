@@ -1,11 +1,3 @@
-void print(const char *str);
-void exit();
-
-void main() {
-    print("Hai there\n");
-    exit();
-}
-
 void print(const char *str) {
     asm volatile (
         "pusha\n"
@@ -26,4 +18,9 @@ void print(const char *str) {
 
 void exit() {
     asm volatile("movl $3, %eax\nint $0x40\n");
+}
+
+void main() {
+    print("Hai there\nDon't you like it when things just work?\n");
+    exit();
 }

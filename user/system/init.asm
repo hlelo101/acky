@@ -1,16 +1,16 @@
 [bits 32]
+; Acky executable file header
+db "Init", 0, "                          ", 0	; Name
+dd start								; Entry point
+db "AEF"								; Signature
+
+start:
 mov ecx, string
 call print_string
 
 mov eax, 2
 mov ebx, procPath
-mov ecx, procName
 int 0x40
-
-mov eax, 2
-mov ebx, otherProcPath
-mov ecx, procName
-; int 0x40
 
 halt:
     jmp halt
@@ -30,6 +30,4 @@ print_string_loop:
 	ret
 
 string db 10, 'Welcome to Acky OS!', 10, 0
-procName db 'Test', 0
-procPath db 'A:/PROGDAT/SHELL.BIN', 0
-otherProcPath db 'A:/PROGDAT/TEST2.BIN', 0
+procPath db 'A:/PROGDAT/SHELL.AEF', 0

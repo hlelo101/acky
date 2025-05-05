@@ -1,6 +1,7 @@
 [bits 32]
-
-start:
+db "Test 2", 0, "                        ", 0
+dd thing
+db "AEF"
 
 thing:
     mov eax, 0
