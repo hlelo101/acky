@@ -56,9 +56,9 @@ void setProcessPC(int idx, uint32_t pc) {
     processes[idx].pcLoc = pc;
 }
 
-int spawnProcess(const char *name, const char *path) {
+uint32_t spawnProcess(const char *name, const char *path) {
     fileInfo info;
-    if(fsGetFileInfo(path, &info) == -1) return -1; // File not found
+    if(fsGetFileInfo(path, &info) == -1) return 0; // File not found
     uint8_t processBuffer[info.size < 2048 ? 2048 : info.size];
 
     fsReadFile(path, processBuffer, &info);
@@ -71,7 +71,7 @@ int spawnProcess(const char *name, const char *path) {
 void kill(int pid) {
     const int idx = getProcessIndexFromPID(pid);
     if(idx == -1) return;
-    
+
     serialSendString("[kill()]: Killing process \""); serialSendString(processes[idx].name); serialSendString("\"\n");
     const uint32_t memSize = processes[idx].memSize;
     freeMem(processes[idx].memStart);

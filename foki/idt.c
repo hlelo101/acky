@@ -69,11 +69,11 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
     asm volatile("mov %%edx, %0" : "=r"(options.edx));
 
     switch(options.eax) {
-        case 0: // Print character
+        case SC_PRINTCHAR: // Print character
             char c = (char)(options.ebx & 0xFF);
             printChar(c);
             break;
-        case 1: // Get user input
+        case SC_GETUINPUT: // Get user input
             // Check the buffer (address in EBX)
             if(options.ebx > (uint32_t)processes[schedulerProcessAt].memSize) {
                 serialSendString("[Warning]: Invalid memory access\n");
@@ -89,7 +89,7 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
             asm volatile("pop %eax\nmov %eax, 0\npop %edx\npop %ecx\npop %ebx\n"); // I mean yeah you can consider this black magic but... you know, it works
             asm volatile("jmp PITISR");
             break;
-        case 2: // Spawn process
+        case SC_SPAWNPROC: // Spawn process; EBX
             // EBX = path, ECX = name
             if(options.ebx > (uint32_t)processes[schedulerProcessAt].memSize) {
                 serialSendString("[Warning]: Invalid memory access\n");
@@ -99,18 +99,23 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
             char *path = (char *)(options.ebx + processes[schedulerProcessAt].memStart);
             char *name = (char *)(options.ecx + processes[schedulerProcessAt].memStart);
             FSsetSTI = false;
-            int processIndex = spawnProcess(name, path);
+            const uint32_t newPID = spawnProcess(name, path);
             FSsetSTI = true;
-            if(processIndex == -1) {
+            if(newPID == 0) {
                 serialSendString("[Warning]: Failed to spawn process\n");
                 syscallReturn = SRET_ERROR;
                 break;
             }
+            syscallReturn = newPID;
             break;
-        case 3: // Exit
+        case SC_EXIT: // Exit
             kill(processes[schedulerProcessAt].pid);
             asm volatile("pop %eax\nmov %eax, 0\npop %edx\npop %ecx\npop %ebx\n");
             asm volatile("jmp PITISR");
+            break;
+        case SC_ISPROCRUNNING: // Check if a process is running
+            if(getProcessIndexFromPID(options.ebx) == -1) syscallReturn = 0;
+            else syscallReturn = 1;
             break;
         default:
             // Invalid syscall

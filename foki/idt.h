@@ -28,6 +28,14 @@ enum SyscallReturn {
     SRET_ERROR
 };
 
+enum syscalls {
+    SC_PRINTCHAR,
+    SC_GETUINPUT,
+    SC_SPAWNPROC,
+    SC_EXIT,
+    SC_ISPROCRUNNING
+};
+
 void initIDT();
 void PICMap(int masterOffset, int slaveOffset, uint8_t masterMasks, uint8_t slaveMasks);
 void setIDTGate(int index, uint32_t address, uint16_t selector, uint8_t flags);
