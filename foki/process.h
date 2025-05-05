@@ -4,6 +4,7 @@
 #include "memory.h"
 #include "fs.h"
 #include "serial.h"
+#include "pit.h"
 
 #define DEFAULT_PROCESS_MEMSIZE 0x10000
 
@@ -24,6 +25,7 @@ typedef struct {
     int memSize;
     uint32_t pcLoc;
     generalRegs regs;
+    uint32_t pid;
 } process;
 
 extern process processes[256];

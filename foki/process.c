@@ -12,12 +12,21 @@ int createProcessEntry(const char *name, uint32_t fileSize) {
     processes[processCount].regs.ebp = 4096;
     processes[processCount].waiting = false;
     processes[processCount].memStart = allocMem(fileSize);
+    processes[processCount].pid = tick + processCount;
     serialSendString("[createProcessEntry()]: New process \""); serialSendString(name);
-    serialSendString("\" , memory allocated at: "); serialSendInt(processes[processCount].memStart); serialSend('\n');
+    serialSendString("\" , memory allocated at: "); serialSendInt(processes[processCount].memStart); 
+    serialSendString(" PID: "); serialSendInt(processes[processCount].pid); serialSend('\n');
     processes[processCount].memSize = fileSize;
     processCount++;
     
     return processCount - 1;
+}
+
+int getProcessIndexFromPID(uint32_t pid) {
+    for(int i = 1; i<processCount; i++) {
+        if(processes[i].pid == pid) return i;
+    }
+    return -1; // Not found
 }
 
 int getNextProcess() {
@@ -56,11 +65,13 @@ int spawnProcess(const char *name, const char *path) {
     int processIndex = createProcessEntry(name, info.size);
     memcpy((void *)processes[processIndex].memStart, processBuffer, 2048);
 
-    return processIndex;
+    return processes[processIndex].pid;
 }
 
-void kill(int idx) {
-    if(idx < 0 || idx >= processCount) return;
+void kill(int pid) {
+    const int idx = getProcessIndexFromPID(pid);
+    if(idx == -1) return;
+    
     serialSendString("[kill()]: Killing process \""); serialSendString(processes[idx].name); serialSendString("\"\n");
     const uint32_t memSize = processes[idx].memSize;
     freeMem(processes[idx].memStart);

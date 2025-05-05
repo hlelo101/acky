@@ -108,7 +108,7 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
             }
             break;
         case 3: // Exit
-            kill(schedulerProcessAt);
+            kill(processes[schedulerProcessAt].pid);
             asm volatile("pop %eax\nmov %eax, 0\npop %edx\npop %ecx\npop %ebx\n");
             asm volatile("jmp PITISR");
             break;

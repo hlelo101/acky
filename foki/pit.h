@@ -20,6 +20,7 @@ void initPIT(const uint32_t freq);
 __attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame);
 void sleep(uint32_t t);
 extern void trampoline(void);
+extern uint32_t tick;
 extern uint32_t proc_ip;
 extern uint32_t proc_flags;
 extern uint32_t proc_regs_eax;
