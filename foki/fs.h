@@ -22,6 +22,7 @@ typedef struct {
 typedef struct {
     char name[32];
     uint32_t size;
+    uint32_t lbaLoc;
 } fileInfo;
 
 extern bool FSsetSTI;
@@ -32,3 +33,4 @@ int addDrive(char letter, const char* name, const unsigned int lbaStart, const u
 int iso9660Read(const char *path, int idx, uint8_t *outputBuffer, fileInfo *info);
 int fsReadFile(const char *path, uint8_t *buffer, fileInfo *info);
 int fsGetFileInfo(const char *path, fileInfo *info);
+int iso9660GetFileInfo(const char *path, int idx, fileInfo *info);

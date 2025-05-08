@@ -64,69 +64,18 @@ int getDriveIndexFromLetter(const char c) {
     return -1;
 }
 
-// uint32_t iso9660getLastFileLBAFromPath(const char *path, )
-
 // A path should look something like this: "A:/folder/file.ext"
 int iso9660Read(const char *path, int idx, uint8_t *outputBuffer, fileInfo *info) {
-    // Process the path
-    int pathSize = 0;
-    while(path[pathSize] != '\0') pathSize++;
-    char processedPath[pathSize + 3];
-    strcpy(processedPath, path);
-    processedPath[pathSize] = ';';
-    processedPath[pathSize + 1] = '1';
-    processedPath[pathSize + 2] = '\0';
+    iso9660GetFileInfo(path, idx, info);
 
-    // Read the root folder location
-    uint8_t buffer[2048];
-    commonRead(drives[idx].loc, 16, 1, buffer);
-    // Root directory entry offset is 156
-    uint32_t lastFolderLoc = buffer[156 + 2] | (buffer[156 + 3] << 8) | (buffer[156 + 4] << 16) | (buffer[156 + 5] << 24);
-    uint8_t fileSize = 0;
-    bool lastDirIsFile = false;
-    // Go through each directories
-    int lastSlashOffset = 3;
+    if(info->size == 0) return -1; // Not found
 
-    // Get the target folder name
-    char folderName[32];
-    while(processedPath[lastSlashOffset] != '\0') {
-        int j = lastSlashOffset;
-        while(processedPath[j] != '/' && processedPath[j] != '\0') {
-            folderName[j - lastSlashOffset] = processedPath[j];
-            j++;
-        }
-        folderName[j - lastSlashOffset] = '\0';
-        lastSlashOffset = j + 1;
-
-        // At this point, we have the folder name, try to find it in the last dir by iterating through each entry
-        commonRead(drives[idx].loc, lastFolderLoc, 1, buffer);
-        int entryOffset = 0;
-        while(buffer[entryOffset] != 0) {
-            // Check the name
-            uint8_t dirEntryLength = buffer[entryOffset];
-            uint8_t nameLength = buffer[entryOffset + 32];
-            fileSize = buffer[entryOffset + 26];
-            char dirName[32] = {0};
-            memcpy(dirName, buffer + entryOffset + 33, nameLength);
-
-            // If the object is a file, it ends with ;1
-            if(dirName[nameLength - 2] == ';' && dirName[nameLength - 1] == '1') lastDirIsFile = true;
-            if(strcmp(dirName, folderName) == 0) {
-                // Found the folder, get the location
-                lastFolderLoc = buffer[entryOffset + 2] | (buffer[entryOffset + 3] << 8) | (buffer[entryOffset + 4] << 16) | (buffer[entryOffset + 5] << 24);
-                break;
-            }
-
-            entryOffset += dirEntryLength;
-        }
-    }
-    if(!lastDirIsFile) return -1; // Not found
-
-    for(int i = 0; i<32; i++) info->name[i] = folderName[i];
+    serialSendString("File size: "); serialSendInt(info->size); serialSend('\n');
+    serialSendString("File location: "); serialSendInt(info->lbaLoc); serialSend('\n');
+    serialSendString("File name: "); serialSendString(info->name); serialSend('\n');
+     
     // Read the file
-    commonRead(drives[idx].loc, lastFolderLoc, 1, buffer);
-    info->size = ((fileSize == 0) ? 2048 : fileSize);
-    for(int i = 0; i < ((fileSize == 0) ? 2048 : fileSize); i++) outputBuffer[i] = buffer[i];
+    commonRead(drives[idx].loc, info->lbaLoc, info->size / 2048, outputBuffer);
 
     return 0;
 }
@@ -189,6 +138,7 @@ int iso9660GetFileInfo(const char *path, int idx, fileInfo *info) {
 
     for(int i = 0; i<32; i++) info->name[i] = folderName[i];
     info->size = ((fileSize == 0) ? 2048 : fileSize);
+    info->lbaLoc = lastFolderLoc;
 
     return 0;
 }
