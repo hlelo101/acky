@@ -127,6 +127,9 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
             if(getProcessIndexFromPID(options.ebx) == -1) syscallReturn = 0;
             else syscallReturn = 1;
             break;
+        case SC_CLEARSCR:
+            clearScr();
+            break;
         default:
             // Invalid syscall
             serialSendString("[Warning]: Invalid system call\n");

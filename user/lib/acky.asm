@@ -4,6 +4,7 @@ global exit
 global getInput
 global spawnProcess
 global processRunning
+global clearScr
 
 section .ackylib
 print:
@@ -60,3 +61,12 @@ exit:
     mov eax, 3
     int 0x40
     jmp $ ; How did you get here
+
+clearScr:
+    push ebx
+
+    mov eax, 5
+    int 0x40
+
+    pop ebx
+    ret

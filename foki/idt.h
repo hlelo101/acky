@@ -33,7 +33,8 @@ enum syscalls {
     SC_GETUINPUT,
     SC_SPAWNPROC,
     SC_EXIT,
-    SC_ISPROCRUNNING
+    SC_ISPROCRUNNING,
+    SC_CLEARSCR
 };
 
 void initIDT();
