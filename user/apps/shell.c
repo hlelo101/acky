@@ -1,3 +1,4 @@
+// TODO: Add some checks, uinput[] IS NOT safe
 #include <acky.h>
 #include <stdbool.h>
 
@@ -31,8 +32,21 @@ void main() {
         }
         skipIf:
 
+        bool reRan = false;
+        reRun:
         const int childPID = spawnProcess(uinput);
-        if(childPID == SRET_ERROR) print("[!!]: Not found/Invalid executable\n");
+        if(childPID == SRET_ERROR) {
+            if(!reRan) {
+                reRan = true;
+
+                const char progdatPath[] = "A:/PROGDAT/";
+                for(int i = 0; i < sizeof(uinput); i++) uinput[i + 11] = uinput[i];
+                for(int i = 0; i < 11; i++) uinput[i] = progdatPath[i];
+
+                goto reRun;
+            }
+            print("[!!]: Not found/Invalid executable\n");
+        }
         else while(processRunning(childPID));
 
 
