@@ -69,11 +69,6 @@ int iso9660Read(const char *path, int idx, uint8_t *outputBuffer, fileInfo *info
     iso9660GetFileInfo(path, idx, info);
 
     if(info->size == 0) return -1; // Not found
-
-    serialSendString("File size: "); serialSendInt(info->size); serialSend('\n');
-    serialSendString("File location: "); serialSendInt(info->lbaLoc); serialSend('\n');
-    serialSendString("File name: "); serialSendString(info->name); serialSend('\n');
-     
     // Read the file
     commonRead(drives[idx].loc, info->lbaLoc, info->size / 2048, outputBuffer);
 

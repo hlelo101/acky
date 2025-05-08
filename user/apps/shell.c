@@ -1,4 +1,6 @@
-#include "../lib/acky.h"
+#include <acky.h>
+
+char uinput[32];
 
 int cmpstr(const char* s1, const char* s2) {
     while(*s1 && (*s1 == *s2)) {
@@ -10,8 +12,6 @@ int cmpstr(const char* s1, const char* s2) {
 }
 
 void main() {
-    char uinput[32];
-
     while(1) {
         print("Acky> ");
         getInput(uinput);
@@ -22,7 +22,7 @@ void main() {
             clearScr();
             goto end;
         }
-        
+
         const int childPID = spawnProcess(uinput);
         if(childPID == SRET_ERROR) print("[!!]: Not found/Invalid executable\n");
         else while(processRunning(childPID));
