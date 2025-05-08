@@ -24,6 +24,7 @@ extern void main(void);
 
 __attribute__((section(".text._start")))
 void _start() {
+    asm volatile("xchgw %bx, %bx");
     main();
 
     while(1);

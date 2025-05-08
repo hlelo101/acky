@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 
-#define NUM_LDT_ENTRIES 3
+#define NUM_LDT_ENTRIES 2
 #define NUM_GDT_ENTRIES 7
 
 typedef struct {

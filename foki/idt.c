@@ -54,7 +54,7 @@ __attribute__((interrupt)) void IRQ7(struct interrupt_frame *interruptFrame __at
 }
 
 __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attribute__((unused))) {
-    asm volatile("push %ebx\npush %ecx\npush %edx\npush %eax\n");
+    asm volatile("push %ebp\npush %ebx\npush %ecx\npush %edx\npush %eax\n");
     asm volatile("push %eax");
     SET_DS(0x10);
     SET_ES(0x10);
@@ -86,7 +86,7 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
             processes[schedulerProcessAt].waiting = true;
             inputWaintingPID = schedulerProcessAt;
 
-            asm volatile("pop %eax\nmov %eax, 0\npop %edx\npop %ecx\npop %ebx\n"); // I mean yeah you can consider this black magic but... you know, it works
+            asm volatile("pop %eax\nmov $0, %eax\npop %edx\npop %ecx\npop %ebx\npop %ebp\n"); // I mean yeah you can consider this black magic but... you know, it works
             asm volatile("jmp PITISR");
             break;
         case SC_SPAWNPROC: // Spawn process; EBX
@@ -97,6 +97,7 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
                 break;
             }
             char *path = (char *)(options.ebx + processes[schedulerProcessAt].memStart);
+            serialSendString("Got path: "); serialSendString(path); serialSend('\n');
             FSsetSTI = false;
             const uint32_t newPID = spawnProcess(path);
             FSsetSTI = true;
@@ -109,7 +110,17 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
             break;
         case SC_EXIT: // Exit
             kill(processes[schedulerProcessAt].pid);
-            asm volatile("pop %eax\nmov %eax, 0\npop %edx\npop %ecx\npop %ebx\n");
+            // Restore the registers from the previous process
+            uint32_t *esp;
+            asm volatile("mov %%esp, %0" : "=r"(esp));
+            esp[0] = processes[schedulerProcessAt].regs.eax;
+            esp[1] = processes[schedulerProcessAt].regs.edx;
+            esp[2] = processes[schedulerProcessAt].regs.ecx;
+            esp[3] = processes[schedulerProcessAt].regs.ebx;
+            esp[4] = processes[schedulerProcessAt].regs.ebp;
+            interruptFrame->flags = processes[schedulerProcessAt].regs.flags;
+            interruptFrame->ip = processes[schedulerProcessAt].pcLoc;
+            asm volatile("pop %eax\npop %edx\npop %ecx\npop %ebx\npop %ebp\n");
             asm volatile("jmp PITISR");
             break;
         case SC_ISPROCRUNNING: // Check if a process is running
@@ -125,17 +136,12 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
     SET_DS(0x0F);
     SET_ES(0x0F);
     asm volatile(
-        "pop %%eax\n"
-        "mov %0, %%eax\n"
-        "pop %%edx\n"
-        "pop %%ecx\n"
-        "pop %%ebx\n"
+        "pop %%eax\nmov %0, %%eax\npop %%edx\npop %%ecx\npop %%ebx\npop %%ebp\n"
         "iret"
         :
         : "r"(syscallReturn)
         : "eax", "edx", "ecx", "ebx"
     );
-    
 }
 
 void setTrampoline(struct interruptFrame *interruptFrame) {

@@ -5,18 +5,20 @@ int schedulerProcessAt = 0;
 process processes[256];
 
 int createProcessEntry(const char *name, uint32_t fileSize) {
+    uint32_t fileSizeWithStack = fileSize + 4096;
+
     strcpy(processes[processCount].name, name);
     processes[processCount].pcLoc = 0;
     processes[processCount].regs.flags = 0x3206; // 0x206 for ring 0
-    processes[processCount].regs.esp = 4096;
-    processes[processCount].regs.ebp = 4096;
+    processes[processCount].regs.esp = fileSizeWithStack;
+    processes[processCount].regs.ebp = fileSizeWithStack;
     processes[processCount].waiting = false;
-    processes[processCount].memStart = allocMem(fileSize);
+    processes[processCount].memStart = allocMem(fileSizeWithStack);
     processes[processCount].pid = tick + processCount;
     serialSendString("[createProcessEntry()]: New process \""); serialSendString(name);
     serialSendString("\" , memory allocated at: "); serialSendInt(processes[processCount].memStart); 
     serialSendString(" PID: "); serialSendInt(processes[processCount].pid); serialSend('\n');
-    processes[processCount].memSize = fileSize;
+    processes[processCount].memSize = fileSizeWithStack;
     processCount++;
     
     return processCount - 1;

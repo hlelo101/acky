@@ -64,6 +64,8 @@ int getDriveIndexFromLetter(const char c) {
     return -1;
 }
 
+// uint32_t iso9660getLastFileLBAFromPath(const char *path, )
+
 // A path should look something like this: "A:/folder/file.ext"
 int iso9660Read(const char *path, int idx, uint8_t *outputBuffer, fileInfo *info) {
     // Process the path

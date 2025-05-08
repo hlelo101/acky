@@ -2,7 +2,7 @@ CC = ~/opt/cross/bin/i386-elf-gcc
 OBJCOPY = ~/opt/cross/bin/i386-elf-objcopy
 OFLAGS = -O binary
 CFLAGS = -ffreestanding -O2 -Wall -Wextra -nostdlib -mno-80387 -lgcc -c
-USERCFLAGS = -ffreestanding -nostdlib -lgcc -T user/apps.ld
+USERCFLAGS = -Wl,--no-warn-rwx-segments -ffreestanding -nostdlib -lgcc -T user/apps.ld
 LDFLAGS = -T linker.ld -o acky.bin -ffreestanding -O2 -nostdlib -lgcc
 AS = nasm
 ASFLAGS = -f bin
@@ -54,12 +54,18 @@ mkiso:
 
 userspace:
 	@echo "Building userspace..."
+	@$(AS) -f elf32 user/lib/acky.asm -o ct/ackylib.o
+
 	@$(AS) $(ASFLAGS) user/system/kproc.asm -o ct/kproc.asa
 	@$(AS) $(ASFLAGS) user/system/init.asm -o ct/init.asa
 
 	@$(AS) $(ASFLAGS) user/apps/test2.asm -o ct/test2.aef
-	@$(AS) $(ASFLAGS) user/apps/shell.asm -o ct/shell.aef
-	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"CTest\"" user/apps.c user/apps/ctest.c -o ct/ctest.elf
+	# @$(AS) $(ASFLAGS) user/apps/shell.asm -o ct/shell.aef
+
+	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"Shell\"" ct/ackylib.o user/apps.c user/apps/shell.c -o ct/shell.elf
+	@$(OBJCOPY) $(OFLAGS) ct/shell.elf ct/shell.aef
+
+	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"CTest\"" ct/ackylib.o user/apps.c user/apps/ctest.c -o ct/ctest.elf
 	@$(OBJCOPY) $(OFLAGS) ct/ctest.elf ct/ctest.aef
 
 clean:

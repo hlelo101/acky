@@ -27,7 +27,6 @@ void initGDT() {
     // Set up the initial LDT
     setLDTEntry(0, 0, 0x1000, 0xFA, 0xCF);                                      // Code segment; 0x9A for ring 0
     setLDTEntry(1, 0, 0x1000, 0xF2, 0xCF);                                      // Data segment; 0x92 for ring 0
-    setLDTEntry(2, 0, 4096, 0xF2, 0xCF);                                        // Data segment for the process' stack
     // Set up the GDT
     setGDTEntry(0, 0, 0, 0, 0);                                                 // Null segment
     setGDTEntry(1, 0, 0xFFFF, 0x9A, 0xCF);                                      // Code segment

@@ -28,7 +28,7 @@ trampoline:
 
     mov ebp, cs:[proc_regs_ebp]
     ; NOTE: Stack segment selector is 0x17
-    push 0x17                       ; Set SS
+    push 0x0F                       ; Set SS
     push dword cs:[proc_regs_esp]   ; Set ESP
     push dword cs:[proc_flags]      ; Restore the flags
     push 0x07                       ; Set CS, 0x04 for ring 0

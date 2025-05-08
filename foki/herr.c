@@ -45,13 +45,14 @@ void intHerr(const char *str, struct interruptFrame *interruptFrame) {
 
     print("EIP: "); printInt(interruptFrame->ip); printChar('\n');
     print("CS: "); printInt(interruptFrame->cs); printChar('\n');
-    // if(interruptFrame->ip < 0x10000) {
-    //     kill(schedulerProcessAt);
-    //     interruptFrame->cs = 0x07;
-    //     interruptFrame->ss = 0x17;
-    //     asm volatile("pop %ebx\npop %ecx\npop %edx\npop %eax\n");
-    //     return;
-    // }
+    print("SS: "); printInt(interruptFrame->ss); printChar('\n');
+    if(interruptFrame->cs == 0x07) {
+        kill(schedulerProcessAt);
+        interruptFrame->ss = 0x0F;
+        setColorAttribute(DEFAULT_COLOR);
+        asm volatile("pop %ebx\npop %ecx\npop %edx\npop %eax\n");
+        return;
+    }
 
     asm volatile("pop %ebx\npop %ecx\npop %edx\npop %eax\n");
 

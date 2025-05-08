@@ -9,6 +9,7 @@ SECTIONS {
         KEEP(*(.text._start))
         *(.text)
         *(.text*)
+        KEEP(*(.ackylib))
     }
     .rodata : {
         *(.rodata)
