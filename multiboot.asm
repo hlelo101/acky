@@ -14,18 +14,15 @@ align 4
 	dd 50
 	dd 50
 	dd 32
-section .bss
-align 16
-stack_bottom:
-resb 16384 * 4 ; 16 KiB * 4
-stack_top:
 
 section .text
 global _start:function (_start.end - _start)
 _start:
+	mov ebp, 0x4000
+	mov esp, ebp
 	push eax
 	push ebx
-	
+
 	extern kmain
 	call kmain
 _start.end:
