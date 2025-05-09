@@ -1,5 +1,6 @@
 #include "fs.h"
 #include "vga.h"
+#include "herr.h"
 
 drive drives[26];
 int driveCount = 0;
@@ -175,4 +176,6 @@ void initFS() {
         ataRead(false, (uint16_t *)buffer, 0, 1);
         parsePartitionTable(buffer, letters[count++], "Primary Slave", LOC_ATA_SLAVE);
     }
+
+    if(count == 0) herr("No compatible drives found");
 }

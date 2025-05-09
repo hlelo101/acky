@@ -37,7 +37,7 @@ __attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame) {
         // we'll just put the wrong value and the process has no reason to change it...
         processes[currentProcessIndex].regs.esp = interruptFrame->sp;
         processes[currentProcessIndex].regs.flags = interruptFrame->flags;
-        // serialSendString("Got IP: "); serialSendInt(interruptFrame->ip);
+        // serialSendString("Got ESP: "); serialSendInt(interruptFrame->sp);
         // serialSendString(" for process "); serialSendString(processes[currentProcessIndex].name); serialSend('\n');
         
         setProcessPC(currentProcessIndex, (uint32_t)interruptFrame->ip);

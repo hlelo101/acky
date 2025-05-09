@@ -32,6 +32,7 @@ getInput:
 
     mov eax, 1
     mov ebx, [esp + 8]
+    mov ecx, [esp + 12]
     int 0x40
 
     pop ebx

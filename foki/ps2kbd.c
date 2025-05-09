@@ -11,6 +11,7 @@ bool kPressed = false; // 37, 165
 
 char *processBufferLoc = 0;
 int processBufferPos = 0;
+int processBufferSize = 0;
 bool processWaitingForInput = false;
 int inputWaintingPID = 0;
 
@@ -36,6 +37,7 @@ __attribute__((interrupt)) void ps2KBDISR(struct interruptFrame *interruptFrame 
                 processes[inputWaintingPID].waiting = false;
                 processBufferLoc[processBufferPos] = '\0'; // Null terminate the string
                 processBufferPos = 0;
+                processBufferSize = 0;
 
                 printChar('\n');
             }
@@ -88,7 +90,7 @@ __attribute__((interrupt)) void ps2KBDISR(struct interruptFrame *interruptFrame 
                 return;
             }
             char c = scancodeToChar(scanCode, capsLock || leftShift || rightShift);
-            if(processWaitingForInput) {
+            if(processWaitingForInput && processBufferPos < processBufferSize - 1) {
                 processBufferLoc[processBufferPos++] = c;
                 printChar(c);
             }

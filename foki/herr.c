@@ -5,7 +5,7 @@
 
 void herr(const char *str) {
     CLI();
-    setColorAttribute(0x4C);
+    setColorAttribute(HERR_COLOR_ATTRIBUTE);
     clearScr();
 
     print("### OS ERROR ###\nSystem version: " VERSION "\n");
@@ -28,7 +28,7 @@ void intHerr(const char *str, struct interruptFrame *interruptFrame) {
     CLI();
     asm volatile("push %eax\npush %edx\npush %ecx\npush %ebx\n");
 
-    setColorAttribute(0x4C);
+    setColorAttribute(HERR_COLOR_ATTRIBUTE);
     clearScr();
 
     print("### OS ERROR ###\nSystem version: " VERSION "\n");

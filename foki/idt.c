@@ -81,7 +81,12 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
                 break;
             }
 
+            if(options.ecx <= 0) {
+                serialSendString("[Warning]: Invalid buffer size");
+            }
+
             processBufferLoc = (char *)(options.ebx + processes[schedulerProcessAt].memStart); // Convert the process' offset to the real one
+            processBufferSize = options.ecx;
             processWaitingForInput = true;
             processes[schedulerProcessAt].waiting = true;
             inputWaintingPID = schedulerProcessAt;
