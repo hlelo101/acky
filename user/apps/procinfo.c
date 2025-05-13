@@ -38,7 +38,7 @@ void intToStr(int num, char *str) {
 }
 
 void main() {
-    print("NAME                            PID\n");
+    print("NAME                            PID                 Memory usage\n");
     const int count = getProcCount();
     procInfo info[count];
 
@@ -50,10 +50,15 @@ void main() {
         for(; info[i].name[strSize] != '\0'; strSize++);
         for(int j = 0; j < 32 - strSize; j++) print(" ");
         
-        char str[10];
+        char str[20];
         intToStr(info[i].pid, str);
         print(str);
-        print("\n");
+        strSize = 0;
+        for(; str[strSize] != '\0'; strSize++);
+        for(int j = 0; j < 20 - strSize; j++) print(" ");
+        intToStr(info[i].memUsage, str);
+        print(str);
+        print("B\n");
     }
 
     exit();
