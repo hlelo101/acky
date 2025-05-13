@@ -19,7 +19,7 @@ trampoline:
     mov esi, [proc_regs_esi]
     mov edi, [proc_regs_edi]
 
-    push eax
+    push ax
 
     ; Set DS
     mov ax, 0x0F ; 0x0C for ring 3
@@ -28,10 +28,10 @@ trampoline:
     mov fs, ax
     mov gs, ax
 
-    pop eax
+    pop ax
 
     mov ebp, cs:[proc_regs_ebp]
-    ; NOTE: Stack segment selector is 0x17
+
     push 0x0F                       ; Set SS
     push dword cs:[proc_regs_esp]   ; Set ESP
     push dword cs:[proc_flags]      ; Restore the flags

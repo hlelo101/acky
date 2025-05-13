@@ -16,16 +16,7 @@ __attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame) {
         const int currentProcessIndex = getCurrentProcessIdx();
 
         const int nextProcessIndex = getNextProcess();
-        if(nextProcessIndex == -1) { // Error occured 3:
-            proc_ip = interruptFrame->ip;
-            proc_flags = interruptFrame->flags;
-            interruptFrame->ip = (uint32_t)trampoline;
-            interruptFrame->flags &= ~(1 << 9); // Do not re-enable interrupts
-            interruptFrame->cs = 0x08;
-            interruptFrame->ss = 0x10;
-            interruptFrame->sp = realTSS.esp0;
-            goto exit;
-        }
+        if(nextProcessIndex == -1) goto trampolineSetup;
         uint32_t *esp;
         asm volatile("mov %%esp, %0" : "=r"(esp));
 
@@ -35,12 +26,8 @@ __attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame) {
         processes[currentProcessIndex].regs.ebx = esp[3];
         processes[currentProcessIndex].regs.edi = esp[4];
         processes[currentProcessIndex].regs.esi = esp[5];
-        // processes[currentProcessIndex].regs.ebp = esp[4]; The reason why we do not save EBP is because
-        // we'll just put the wrong value and the process has no reason to change it...
         processes[currentProcessIndex].regs.esp = interruptFrame->sp;
         processes[currentProcessIndex].regs.flags = interruptFrame->flags;
-        // serialSendString("Got ESP: "); serialSendInt(interruptFrame->sp);
-        // serialSendString(" for process "); serialSendString(processes[currentProcessIndex].name); serialSend('\n');
         
         setProcessPC(currentProcessIndex, (uint32_t)interruptFrame->ip);
         interruptFrame->ip = (uint32_t)trampoline;
@@ -59,10 +46,9 @@ __attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame) {
         proc_regs_edi = processes[nextProcessIndex].regs.edi;
         proc_flags = processes[nextProcessIndex].regs.flags;
         proc_ip = processes[nextProcessIndex].pcLoc;
-        // serialSendString("Setting EBP to: "); serialSendInt(processes[nextProcessIndex].regs.ebp); serialSend('\n');
         proc_regs_ebp = processes[nextProcessIndex].regs.ebp;
-        // LDT stuff
-        // interruptFrame->cs = 0x04;
+        
+        trampolineSetup:
         asm volatile(
             "pushf\n"
             "pop %0\n"
@@ -75,7 +61,6 @@ __attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame) {
         interruptFrame->sp = realTSS.esp0;
     }
 
-    exit:
     tick++;
     asm volatile("pop %eax\npop %edx\npop %ecx\npop %ebx\npop %ebp\npop %edi\npop %esi\n");
     outb(0x20, 0x20);

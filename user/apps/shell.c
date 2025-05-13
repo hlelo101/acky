@@ -1,4 +1,3 @@
-// TODO: Add some checks, uinput[] IS NOT safe
 #include <acky.h>
 #include <stdbool.h>
 
