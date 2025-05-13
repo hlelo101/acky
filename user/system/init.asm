@@ -1,8 +1,8 @@
 [bits 32]
 ; Acky executable file header
-db "Init", 0, "                          ", 0	; Name
-dd start								; Entry point
-db "AEF"								; Signature
+db "Init", 0, "                          ", 0   ; Name
+dd start                                        ; Entry point
+db "AEF"                                        ; Signature
 
 start:
 mov ecx, string

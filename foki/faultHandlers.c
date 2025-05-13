@@ -8,10 +8,10 @@ __attribute__((interrupt)) void dividErr(struct interruptFrame *interruptFrame) 
     SET_ES(0x0F);
 }
 
-__attribute__((interrupt)) void debugErr(struct interruptFrame *interruptFrame) {
+__attribute__((interrupt)) void debugErr(struct interruptFrame *interruptFrame __attribute__((unused))) {
     SET_DS(0x10);
     SET_ES(0x10);
-    intHerr("Debug", interruptFrame);
+    print("Debug!\n");
     SET_DS(0x0F);
     SET_ES(0x0F);
 }

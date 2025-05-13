@@ -8,7 +8,8 @@ AS = nasm
 ASFLAGS = -f bin
 OBJS = ct/boot.o ct/kmain.o ct/vga.o ct/io.o ct/memory.o ct/gdt.o ct/idt.o ct/ps2kbd.o ct/herr.o ct/pit.o ct/ata.o ct/serial.o ct/fs.o ct/process.o ct/pitasm.o ct/faultHandlers.o
 
-QEMUCMD = qemu-system-i386 -drive file=acky.iso,format=raw,media=disk -m 124 -serial stdio -display gtk,zoom-to-fit=on
+# Enabling KVM improves the accuracy of the emulation
+QEMUCMD = qemu-system-i386 -enable-kvm -drive file=acky.iso,format=raw,media=disk -m 124 -serial stdio -display gtk,zoom-to-fit=on -cpu host
 
 all: build userspace mkiso clean
 
@@ -64,6 +65,9 @@ userspace:
 
 	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"Shell\"" user/apps.c user/apps/shell.c -o ct/shell.elf
 	@$(OBJCOPY) $(OFLAGS) ct/shell.elf ct/shell.aef
+
+	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"Process Info\"" user/apps.c user/apps/procinfo.c -o ct/procinfo.elf
+	@$(OBJCOPY) $(OFLAGS) ct/procinfo.elf ct/pinfo.aef
 
 	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"CTest\"" user/apps.c user/apps/ctest.c -o ct/ctest.elf
 	@$(OBJCOPY) $(OFLAGS) ct/ctest.elf ct/ctest.aef

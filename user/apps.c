@@ -25,6 +25,12 @@ extern void main(void);
 __attribute__((section(".text._start")))
 void _start() {
     main();
-
-    while(1);
+    
+    // Currently there's a strange but where it would throw a #GP when returning from main() on KVM...
+    // Needs to be fixed but I guess that means for now every programs must call exit() at the end
+    // of their main() function.
+    asm volatile(
+        "mov $3, %eax\n"
+        "int $0x40"
+    );
 }

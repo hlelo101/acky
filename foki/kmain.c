@@ -34,7 +34,7 @@ void kmain(multiboot_info_t* mbd, uint32_t magic) {
     initSerial();
     serialSendString("Kernel initialization started. Version " VERSION "\n");
     initGDT();
-    initPIT(10000);
+    initPIT(1000);
     initIDT();
     ataInit();
     initFS();

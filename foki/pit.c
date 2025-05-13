@@ -9,7 +9,7 @@
 uint32_t tick = 0;
 
 __attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame) {
-    asm volatile("push %ebp\npush %ebx\npush %ecx\npush %edx\npush %eax\n");
+    asm volatile("push %esi\npush %edi\npush %ebp\npush %ebx\npush %ecx\npush %edx\npush %eax\n");
     SET_DS(0x10);
     
     if(canPreempt) { // Switch task
@@ -33,6 +33,8 @@ __attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame) {
         processes[currentProcessIndex].regs.edx = esp[1];
         processes[currentProcessIndex].regs.ecx = esp[2];
         processes[currentProcessIndex].regs.ebx = esp[3];
+        processes[currentProcessIndex].regs.edi = esp[4];
+        processes[currentProcessIndex].regs.esi = esp[5];
         // processes[currentProcessIndex].regs.ebp = esp[4]; The reason why we do not save EBP is because
         // we'll just put the wrong value and the process has no reason to change it...
         processes[currentProcessIndex].regs.esp = interruptFrame->sp;
@@ -53,12 +55,19 @@ __attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame) {
         proc_regs_ecx = processes[nextProcessIndex].regs.ecx;
         proc_regs_ebx = processes[nextProcessIndex].regs.ebx;
         proc_regs_esp = processes[nextProcessIndex].regs.esp;
+        proc_regs_esi = processes[nextProcessIndex].regs.esi;
+        proc_regs_edi = processes[nextProcessIndex].regs.edi;
         proc_flags = processes[nextProcessIndex].regs.flags;
         proc_ip = processes[nextProcessIndex].pcLoc;
         // serialSendString("Setting EBP to: "); serialSendInt(processes[nextProcessIndex].regs.ebp); serialSend('\n');
         proc_regs_ebp = processes[nextProcessIndex].regs.ebp;
         // LDT stuff
         // interruptFrame->cs = 0x04;
+        asm volatile(
+            "pushf\n"
+            "pop %0\n"
+            : "=r"(interruptFrame->flags) : : "memory" 
+        );
         interruptFrame->flags &= ~(1 << 9); // Do not re-enable interrupts
 
         interruptFrame->cs = 0x08;
@@ -68,7 +77,7 @@ __attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame) {
 
     exit:
     tick++;
-    asm volatile("pop %eax\npop %edx\npop %ecx\npop %ebx\npop %ebp\n");
+    asm volatile("pop %eax\npop %edx\npop %ecx\npop %ebx\npop %ebp\npop %edi\npop %esi\n");
     outb(0x20, 0x20);
     if(!canPreempt) SET_DS(0x0C);
 }

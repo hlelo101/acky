@@ -5,6 +5,10 @@ global getInput
 global spawnProcess
 global processRunning
 global clearScr
+global getProcCount
+global getProcInfo
+global getProcPIDFromIdx
+global serialPrint
 
 section .ackylib
 print:
@@ -13,10 +17,10 @@ print:
     push ecx
 
     mov ecx, [esp + 12]  ; Get the string address in EBX
-    xor eax, eax         ; Print character syscall
 
     .loop:
         mov bl, [ecx]
+        xor eax, eax     ; Print character syscall
         int 0x40
 
         inc ecx
@@ -63,11 +67,57 @@ exit:
     int 0x40
     jmp $ ; How did you get here
 
+getProcCount:
+    mov eax, 6
+    int 0x40
+
+    ret
+
 clearScr:
     push ebx
 
     mov eax, 5
     int 0x40
 
+    pop ebx
+    ret
+
+getProcInfo:
+    push ebx
+    push ecx
+
+    mov eax, 7
+    mov ebx, [esp + 12]
+    mov ecx, [esp + 16]
+    int 0x40
+
+    pop ecx
+    pop ebx
+    ret
+
+getProcPIDFromIdx:
+    push ebx
+
+    mov eax, 8
+    mov ebx, [esp + 8]
+    int 0x40
+
+    pop ebx
+    ret
+
+serialPrint:
+    push ebx
+    push ecx
+
+    mov ecx, [esp + 12]
+    .loop:
+        mov bl, [ecx]
+        mov eax, 9
+        int 0x40
+        inc ecx
+        cmp byte [ecx], 0
+        jne .loop
+
+    pop ecx
     pop ebx
     ret

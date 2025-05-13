@@ -1,6 +1,6 @@
 #include <acky.h>
 
 void main() {
-    print("Hai there\nDon't you like it when things just work?\n");
+    print("Hai there\nThis is a very testy file \n");
     exit();
 }

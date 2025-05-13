@@ -8,12 +8,16 @@ global proc_regs_ecx
 global proc_regs_edx
 global proc_regs_esp
 global proc_regs_ebp
+global proc_regs_esi
+global proc_regs_edi
 
 trampoline:
     mov eax, [proc_regs_eax]
     mov ebx, [proc_regs_ebx]
     mov ecx, [proc_regs_ecx]
     mov edx, [proc_regs_edx]
+    mov esi, [proc_regs_esi]
+    mov edi, [proc_regs_edi]
 
     push eax
 
@@ -44,3 +48,5 @@ proc_regs_ecx dd 0
 proc_regs_edx dd 0
 proc_regs_esp dd 0
 proc_regs_ebp dd 0
+proc_regs_esi dd 0
+proc_regs_edi dd 0

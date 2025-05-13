@@ -29,3 +29,5 @@ extern uint32_t proc_regs_ecx;
 extern uint32_t proc_regs_edx;
 extern uint32_t proc_regs_esp;
 extern uint32_t proc_regs_ebp;
+extern uint32_t proc_regs_esi;
+extern uint32_t proc_regs_edi;

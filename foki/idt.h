@@ -28,13 +28,23 @@ enum SyscallReturn {
     SRET_ERROR
 };
 
+typedef struct {
+    char name[32];
+    uint32_t memUsage;
+    uint32_t pid;
+} userProcInfo;
+
 enum syscalls {
     SC_PRINTCHAR,
     SC_GETUINPUT,
     SC_SPAWNPROC,
     SC_EXIT,
     SC_ISPROCRUNNING,
-    SC_CLEARSCR
+    SC_CLEARSCR,
+    SC_GETPORCNUM,
+    SC_GETPROCINFO,
+    SC_GETPROCPIDFROMIDX,
+    SC_SERIALSEND
 };
 
 void initIDT();

@@ -54,7 +54,7 @@ __attribute__((interrupt)) void IRQ7(struct interrupt_frame *interruptFrame __at
 }
 
 __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attribute__((unused))) {
-    asm volatile("push %ebp\npush %ebx\npush %ecx\npush %edx\npush %eax\n");
+    asm volatile("push %esi\npush %edi\npush %ebp\npush %ebx\npush %ecx\npush %edx\npush %eax\n");
     asm volatile("push %eax");
     SET_DS(0x10);
     SET_ES(0x10);
@@ -76,13 +76,13 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
         case SC_GETUINPUT: // Get user input
             // Check the buffer (address in EBX)
             if(options.ebx > (uint32_t)processes[schedulerProcessAt].memSize) {
-                serialSendString("[Warning]: Invalid memory access\n");
+                serialSendString("[SC_GETUINPUT]: Invalid memory access\n");
                 syscallReturn = SRET_ERROR;
                 break;
             }
 
             if(options.ecx <= 0) {
-                serialSendString("[Warning]: Invalid buffer size");
+                serialSendString("[SC_GETUINPUT]: Invalid buffer size");
             }
 
             processBufferLoc = (char *)(options.ebx + processes[schedulerProcessAt].memStart); // Convert the process' offset to the real one
@@ -91,13 +91,13 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
             processes[schedulerProcessAt].waiting = true;
             inputWaintingPID = schedulerProcessAt;
 
-            asm volatile("pop %eax\nmov $0, %eax\npop %edx\npop %ecx\npop %ebx\npop %ebp\n"); // I mean yeah you can consider this black magic but... you know, it works
+            asm volatile("pop %eax\npop %edx\npop %ecx\npop %ebx\npop %ebp\npop %edi\npop %esi\n"); // I mean yeah you can consider this black magic but... you know, it works
             asm volatile("jmp PITISR");
             break;
         case SC_SPAWNPROC: // Spawn process; EBX
             // EBX = path
             if(options.ebx > (uint32_t)processes[schedulerProcessAt].memSize) {
-                serialSendString("[Warning]: Invalid memory access\n");
+                serialSendString("[SC_SPAWNPROC]: Invalid memory access\n");
                 syscallReturn = SRET_ERROR;
                 break;
             }
@@ -107,7 +107,7 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
             const uint32_t newPID = spawnProcess(path);
             FSsetSTI = true;
             if(newPID == 0) {
-                serialSendString("[Warning]: Failed to spawn process\n");
+                serialSendString("[SC_SPAWNPROC]: Failed to spawn process\n");
                 syscallReturn = SRET_ERROR;
                 break;
             }
@@ -123,9 +123,11 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
             esp[2] = processes[schedulerProcessAt].regs.ecx;
             esp[3] = processes[schedulerProcessAt].regs.ebx;
             esp[4] = processes[schedulerProcessAt].regs.ebp;
+            esp[5] = processes[schedulerProcessAt].regs.edi;
+            esp[6] = processes[schedulerProcessAt].regs.esi;
             interruptFrame->flags = processes[schedulerProcessAt].regs.flags;
             interruptFrame->ip = processes[schedulerProcessAt].pcLoc;
-            asm volatile("pop %eax\npop %edx\npop %ecx\npop %ebx\npop %ebp\n");
+            asm volatile("pop %eax\npop %edx\npop %ecx\npop %ebx\npop %ebp\npop %edi\npop %esi\n");
             asm volatile("jmp PITISR");
             break;
         case SC_ISPROCRUNNING: // Check if a process is running
@@ -134,6 +136,39 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
             break;
         case SC_CLEARSCR:
             clearScr();
+            break;
+        case SC_GETPORCNUM:
+            syscallReturn = processCount;
+            break;
+        case SC_GETPROCINFO:
+            if((options.ebx > (uint32_t)processes[schedulerProcessAt].memSize)) {
+                serialSendString("[SC_GETPROCINFO]: Invalid memory access\n");
+                syscallReturn = SRET_ERROR;
+                break;
+            }
+            const int procIdx = getProcessIndexFromPID(options.ecx);
+            if(procIdx == -1) {
+                serialSendString("[SC_GETPROCINFO]: Process not found\n");
+                syscallReturn = SRET_ERROR;
+                break;
+            }
+
+            userProcInfo *info = (userProcInfo *)(options.ebx + processes[schedulerProcessAt].memStart);
+            info->pid = processes[procIdx].pid;
+            info->memUsage = processes[procIdx].memSize;
+            strcpy(info->name, processes[procIdx].name);
+            break;
+        case SC_GETPROCPIDFROMIDX:
+            if(options.ebx >= (uint32_t)processCount) {
+                serialSendString("[SC_GETPROCPIDFROMIDX]: Invalid process index\n");
+                syscallReturn = SRET_ERROR;
+                break;
+            }
+            syscallReturn = processes[options.ebx].pid;
+            break;
+        case SC_SERIALSEND:
+            char serialC = (char)(options.ebx & 0xFF);
+            serialSend(serialC);
             break;
         default:
             // Invalid syscall
@@ -144,7 +179,7 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
     SET_DS(0x0F);
     SET_ES(0x0F);
     asm volatile(
-        "pop %%eax\nmov %0, %%eax\npop %%edx\npop %%ecx\npop %%ebx\npop %%ebp\n"
+        "pop %%eax\nmov %0, %%eax\npop %%edx\npop %%ecx\npop %%ebx\npop %%ebp\npop %%edi\npop %%esi\n"
         "iret"
         :
         : "r"(syscallReturn)
