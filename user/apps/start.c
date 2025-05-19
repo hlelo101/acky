@@ -5,8 +5,7 @@ void main() {
     char uinput[32];
     getInput(uinput, sizeof(uinput));
 
-    spawnProcess("A:/PROGDAT/TEST2.AEF");
-    //if(spawnProcess(uinput) != SRET_SUCCESS) print("An error occured\n");
+    if(spawnProcess(uinput) == 0) print("An error occured\n");
 
     exit();
 }
