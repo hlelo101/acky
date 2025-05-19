@@ -38,7 +38,10 @@ void intToStr(int num, char *str) {
 }
 
 void main() {
-    print("NAME                            PID                 Memory usage\n");
+    print(
+        "Name                            PID                 Memory usage\n"
+        "----------------------------------------------------------------\n"
+    );
     const int count = getProcCount();
     procInfo info[count];
 

@@ -69,6 +69,9 @@ userspace:
 	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"Process Info\"" user/apps.c user/apps/procinfo.c -o ct/procinfo.elf
 	@$(OBJCOPY) $(OFLAGS) ct/procinfo.elf ct/pinfo.aef
 
+	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"Starter\"" user/apps.c user/apps/start.c -o ct/start.elf
+	@$(OBJCOPY) $(OFLAGS) ct/start.elf ct/start.aef
+
 	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"CTest\"" user/apps.c user/apps/ctest.c -o ct/ctest.elf
 	@$(OBJCOPY) $(OFLAGS) ct/ctest.elf ct/ctest.aef
 

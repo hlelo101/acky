@@ -7,6 +7,7 @@
 #include "serial.h"
 #include "faultHandlers.h"
 #include "process.h"
+#include "gdt.h"
 
 gate idt[256];
 idtrDesc idtr;
@@ -51,6 +52,10 @@ __attribute__((interrupt)) void IRQ7(struct interrupt_frame *interruptFrame __at
     outb(0x20, 0x0B);
 
     SET_DS(0x0F);
+}
+
+void wait() {
+    while(1);
 }
 
 __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attribute__((unused))) {
@@ -115,20 +120,37 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
             break;
         case SC_EXIT: // Exit
             kill(processes[schedulerProcessAt].pid);
-            // Restore the registers from the previous process
-            uint32_t *esp;
-            asm volatile("mov %%esp, %0" : "=r"(esp));
-            esp[0] = processes[schedulerProcessAt].regs.eax;
-            esp[1] = processes[schedulerProcessAt].regs.edx;
-            esp[2] = processes[schedulerProcessAt].regs.ecx;
-            esp[3] = processes[schedulerProcessAt].regs.ebx;
-            esp[4] = processes[schedulerProcessAt].regs.ebp;
-            esp[5] = processes[schedulerProcessAt].regs.edi;
-            esp[6] = processes[schedulerProcessAt].regs.esi;
-            interruptFrame->flags = processes[schedulerProcessAt].regs.flags;
-            interruptFrame->ip = processes[schedulerProcessAt].pcLoc;
-            asm volatile("pop %eax\npop %edx\npop %ecx\npop %ebx\npop %ebp\npop %edi\npop %esi\n");
-            asm volatile("jmp PITISR");
+
+            setLDTEntry(0, (uint32_t)wait, 0x1000, 0xFA, 0xCF);
+            setLDTEntry(1, (uint32_t)wait, 0x1000, 0xF2, 0xCF);
+            asm volatile("lldt %0" : : "r"(0x1B)); // We do the same thing as the PITISR :3
+            
+            asm volatile(
+                "mov %ebp, %esp\n"
+                "push $0x0F\n"
+                "push %esp\n"
+                "pushl $0x3206\n"
+                "push $0x07\n"
+                "pushl $0\n"
+                "iret\n"
+            );
+            // // Restore the registers from the previous process
+            // const int nextProcess = getNextProcessDry();
+            
+            // uint32_t *esp;
+            // asm volatile("mov %%esp, %0" : "=r"(esp));
+            // esp[0] = processes[nextProcess].regs.eax;
+            // esp[1] = processes[nextProcess].regs.edx;
+            // esp[2] = processes[nextProcess].regs.ecx;
+            // esp[3] = processes[nextProcess].regs.ebx;
+            // esp[4] = processes[nextProcess].regs.ebp;
+            // esp[5] = processes[nextProcess].regs.edi;
+            // esp[6] = processes[nextProcess].regs.esi;
+            // interruptFrame->flags = processes[nextProcess].regs.flags;
+            // interruptFrame->sp = processes[nextProcess].regs.esp;
+            // interruptFrame->ip = processes[nextProcess].pcLoc;
+            // asm volatile("pop %eax\npop %edx\npop %ecx\npop %ebx\npop %ebp\npop %edi\npop %esi\n");
+            // asm volatile("jmp PITISR");
             break;
         case SC_ISPROCRUNNING: // Check if a process is running
             if(getProcessIndexFromPID(options.ebx) == -1) syscallReturn = 0;

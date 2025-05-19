@@ -41,3 +41,4 @@ void kill(int idx);
 int getProcessIndexFromPID(uint32_t pid);
 extern int schedulerProcessAt;
 extern int processCount;
+int getNextProcessDry();

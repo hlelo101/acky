@@ -28,12 +28,16 @@ __attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame) {
         processes[currentProcessIndex].regs.esi = esp[5];
         processes[currentProcessIndex].regs.esp = interruptFrame->sp;
         processes[currentProcessIndex].regs.flags = interruptFrame->flags;
+
+        // serialSendString("Saving PC "); serialSendInt(interruptFrame->ip); serialSendString(" for process ");
+        // serialSendString(processes[nextProcessIndex].name); serialSend('\n');
         
         setProcessPC(currentProcessIndex, (uint32_t)interruptFrame->ip);
         interruptFrame->ip = (uint32_t)trampoline;
         
-        setLDTEntry(0, processes[nextProcessIndex].memStart, 0x1000, 0xFA, 0xCF);
-        setLDTEntry(1, processes[nextProcessIndex].memStart, 0x1000, 0xF2, 0xCF);
+        uint32_t processMemSizeWithStack = processes[processCount].memSize + (4096 * 4 + 1);
+        setLDTEntry(0, processes[nextProcessIndex].memStart, processMemSizeWithStack, 0xFA, 0xCF);
+        setLDTEntry(1, processes[nextProcessIndex].memStart, processMemSizeWithStack, 0xF2, 0xCF);
         asm volatile("lldt %0" : : "r"(0x1B)); // Reload the LDT to avoid some weird CPU shittery; selector 0x18 for ring 0
         
         // Restore the CPU state

@@ -46,7 +46,7 @@ int strcmp(const char *s1, const char *s2) {
 uint32_t allocMem(uint32_t size) {
     if(memList[memIndex - 1].startAddr + size > getSystemMemory()) herr("Out of memory");
     if(memIndex >= MEM_LIST_SIZE) herr("Memory list overflow");
-    memList[memIndex].startAddr = memList[memIndex - 1].startAddr + memList[memIndex - 1].size + 4096; // Add 4KB for a potential stack
+    memList[memIndex].startAddr = memList[memIndex - 1].startAddr + memList[memIndex - 1].size;
     memList[memIndex].size = size;
     memIndex++;
 
@@ -71,11 +71,11 @@ int freeMem(uint32_t memStart) {
                 memList[j] = memList[j + 1];
             }
             memIndex--;
-
-            memcpy((void *)memStart, (void *)(memStart + size), memList[memIndex].startAddr - memStart);
+            
+            memcpy((void *)memStart, (void *)(memStart + size), (memList[memIndex].startAddr + memList[memIndex].size) - memStart);
             return memStart;
         }
     }
-
+    
     return -1; // Not found
 }

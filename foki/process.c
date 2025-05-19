@@ -22,8 +22,9 @@ int createProcessEntry(const char *name, uint32_t fileSize) {
     processes[processCount].memStart = allocMem(fileSizeWithStack);
     processes[processCount].pid = tick + processCount;
     serialSendString("[createProcessEntry()]: New process \""); serialSendString(name);
-    serialSendString("\" , memory allocated at: "); serialSendInt(processes[processCount].memStart); 
-    serialSendString(" PID: "); serialSendInt(processes[processCount].pid); serialSend('\n');
+    serialSendString("\", memory allocated at: "); serialSendInt(processes[processCount].memStart); 
+    serialSendString(" PID: "); serialSendInt(processes[processCount].pid); serialSendString(", size: ");
+    serialSendInt(fileSizeWithStack); serialSend('\n');
     processes[processCount].memSize = fileSizeWithStack;
     processCount++;
     
@@ -37,15 +38,21 @@ int getProcessIndexFromPID(uint32_t pid) {
     return -1; // Not found
 }
 
-int getNextProcess() {
+int getNextProcessDry() {
     if(processCount == 0) return -1;
 
-    pickOther:
-    schedulerProcessAt++;
-    if(schedulerProcessAt >= processCount) schedulerProcessAt = 1;
-    if(schedulerProcessAt == 0) schedulerProcessAt = 1; // Skip the kernel process
-    if(processes[schedulerProcessAt].waiting) goto pickOther;
+    int at = schedulerProcessAt;
+    do {
+        at++;
+        if(at >= processCount) at = 1;
+        if(at == 0) at = 1; // Skip the kernel process
+    } while(processes[at].waiting);
 
+    return at;
+}
+
+int getNextProcess() {
+    schedulerProcessAt = getNextProcessDry();
     return schedulerProcessAt;
 }
 
