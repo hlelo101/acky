@@ -134,23 +134,6 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
                 "pushl $0\n"
                 "iret\n"
             );
-            // // Restore the registers from the previous process
-            // const int nextProcess = getNextProcessDry();
-            
-            // uint32_t *esp;
-            // asm volatile("mov %%esp, %0" : "=r"(esp));
-            // esp[0] = processes[nextProcess].regs.eax;
-            // esp[1] = processes[nextProcess].regs.edx;
-            // esp[2] = processes[nextProcess].regs.ecx;
-            // esp[3] = processes[nextProcess].regs.ebx;
-            // esp[4] = processes[nextProcess].regs.ebp;
-            // esp[5] = processes[nextProcess].regs.edi;
-            // esp[6] = processes[nextProcess].regs.esi;
-            // interruptFrame->flags = processes[nextProcess].regs.flags;
-            // interruptFrame->sp = processes[nextProcess].regs.esp;
-            // interruptFrame->ip = processes[nextProcess].pcLoc;
-            // asm volatile("pop %eax\npop %edx\npop %ecx\npop %ebx\npop %ebp\npop %edi\npop %esi\n");
-            // asm volatile("jmp PITISR");
             break;
         case SC_ISPROCRUNNING: // Check if a process is running
             if(getProcessIndexFromPID(options.ebx) == -1) syscallReturn = 0;
