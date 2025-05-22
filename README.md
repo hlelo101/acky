@@ -25,8 +25,8 @@ Acky's directories are:
 > This directory holds program files.
 # The shell
 The shell is pretty basic. You can start an app with it.\
-To do so, simply enter the *full* path of the application you want to run.\
-For example, to run test2.bin, enter `A:/PROGDAT/TEST2.BIN`.
+To do so, simply enter the name or full path of the application you want to run.\
+For example, to run test2.bin, you can enter `TEST2.AEF` or `A:/PROGDAT/TEST2.AEF`.
 
 It is planned to make a more complex shell in the future.
 # The AEF file format
