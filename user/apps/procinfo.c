@@ -1,8 +1,7 @@
 #include <acky.h>
 
-void intToStr(int num, char *str) {
-    int i = 0;
-    int isNegative = 0;
+void intToStr(uint32_t num, char *str) {
+    uint32_t i = 0;
 
     if (num == 0) {
         str[i++] = '0';
@@ -10,18 +9,9 @@ void intToStr(int num, char *str) {
         return;
     }
 
-    if (num < 0) {
-        isNegative = 1;
-        num = -num;
-    }
-
     while (num != 0) {
         str[i++] = (num % 10) + '0';
         num /= 10;
-    }
-
-    if (isNegative) {
-        str[i++] = '-';
     }
 
     str[i] = '\0';
