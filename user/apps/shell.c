@@ -4,6 +4,7 @@
 #define INPUT_BUFFER_SIZE 32
 
 char uinput[INPUT_BUFFER_SIZE];
+char username[10];
 
 int cmpstr(const char* s1, const char* s2) {
     while(*s1 && (*s1 == *s2)) {
@@ -15,10 +16,11 @@ int cmpstr(const char* s1, const char* s2) {
 }
 
 void main() {
+    print("Enter your username: "); getInput(username, 10);
     bool firstLoop = false;
 
     while(1) {
-        print("Acky> ");
+        print(username); print("@Acky> ");
         getInput(uinput, INPUT_BUFFER_SIZE);
         
         if(uinput[0] == '\0') continue;
