@@ -19,6 +19,7 @@ struct interrupt_frame {
 void initPIT(const uint32_t freq);
 __attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame);
 void sleep(uint32_t t);
+extern bool saveRegs;
 extern void trampoline(void);
 extern uint32_t tick;
 extern uint32_t proc_ip;

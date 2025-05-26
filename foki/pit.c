@@ -7,6 +7,7 @@
 #include "gdt.h"
 
 uint32_t tick = 0;
+bool saveRegs = true;
 
 __attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame) {
     asm volatile("push %esi\npush %edi\npush %ebp\npush %ebx\npush %ecx\npush %edx\npush %eax\n");
@@ -17,29 +18,33 @@ __attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame) {
 
         const int nextProcessIndex = getNextProcess();
         if(nextProcessIndex == -1) goto trampolineSetup;
-        uint32_t *esp;
-        asm volatile("mov %%esp, %0" : "=r"(esp));
 
-        processes[currentProcessIndex].regs.eax = esp[0];
-        processes[currentProcessIndex].regs.edx = esp[1];
-        processes[currentProcessIndex].regs.ecx = esp[2];
-        processes[currentProcessIndex].regs.ebx = esp[3];
-        processes[currentProcessIndex].regs.edi = esp[4];
-        processes[currentProcessIndex].regs.esi = esp[5];
-        processes[currentProcessIndex].regs.esp = interruptFrame->sp;
-        processes[currentProcessIndex].regs.flags = interruptFrame->flags;
+        if(saveRegs) {
+            uint32_t *esp;
+            asm volatile("mov %%esp, %0" : "=r"(esp));
 
-        // serialSendString("Saving PC "); serialSendInt(interruptFrame->ip); serialSendString(" for process ");
-        // serialSendString(processes[nextProcessIndex].name); serialSend('\n');
-        
-        setProcessPC(currentProcessIndex, (uint32_t)interruptFrame->ip);
+            processes[currentProcessIndex].regs.eax = esp[0];
+            processes[currentProcessIndex].regs.edx = esp[1];
+            processes[currentProcessIndex].regs.ecx = esp[2];
+            processes[currentProcessIndex].regs.ebx = esp[3];
+            processes[currentProcessIndex].regs.edi = esp[4];
+            processes[currentProcessIndex].regs.esi = esp[5];
+            processes[currentProcessIndex].regs.esp = interruptFrame->sp;
+            processes[currentProcessIndex].regs.flags = interruptFrame->flags;
+
+            setProcessPC(currentProcessIndex, (uint32_t)interruptFrame->ip);
+        } else saveRegs = true;
         interruptFrame->ip = (uint32_t)trampoline;
+
+        // serialSendString("[PITISR]: Saving IP: "); serialSendInt(interruptFrame->ip); serialSendString(" for process ");
+        // serialSendString(processes[currentProcessIndex].name); serialSend('\n');
+        
         
         uint32_t processMemSizeWithStack = processes[processCount].memSize + (4096 * 4 + 1);
         setLDTEntry(0, processes[nextProcessIndex].memStart, processMemSizeWithStack, 0xFA, 0xCF);
         setLDTEntry(1, processes[nextProcessIndex].memStart, processMemSizeWithStack, 0xF2, 0xCF);
         asm volatile("lldt %0" : : "r"(0x1B)); // Reload the LDT to avoid some weird CPU shittery; selector 0x18 for ring 0
-        
+
         // Restore the CPU state
         proc_regs_eax = processes[nextProcessIndex].regs.eax;
         proc_regs_edx = processes[nextProcessIndex].regs.edx;

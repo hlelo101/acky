@@ -77,7 +77,7 @@ uint32_t spawnProcess(const char *path) {
     uint8_t processBuffer[info.size < 2048 ? 2048 : info.size];
 
     fsReadFile(path, processBuffer, &info);
-    if(processBuffer[36] != 'A' && processBuffer[37] != 'E' && processBuffer[38] != 'S') {
+    if(processBuffer[36] != 'A' && processBuffer[37] != 'E' && processBuffer[38] != 'F') {
         serialSendString("[spawnProcess()]: Invalid process file format\n");
         return 0;
     }
@@ -97,6 +97,7 @@ void kill(int pid) {
     if(idx == -1) return;
 
     serialSendString("[kill()]: Killing process \""); serialSendString(processes[idx].name); serialSendString("\"\n");
+
     const uint32_t memSize = processes[idx].memSize;
     freeMem(processes[idx].memStart);
     for(int i = idx; i < processCount - 1; i++) {

@@ -120,6 +120,7 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
             break;
         case SC_EXIT: // Exit
             kill(processes[schedulerProcessAt].pid);
+            saveRegs = false;
 
             setLDTEntry(0, (uint32_t)wait, 0x1000, 0xFA, 0xCF);
             setLDTEntry(1, (uint32_t)wait, 0x1000, 0xF2, 0xCF);

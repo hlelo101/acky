@@ -5,7 +5,7 @@ void main() {
     char uinput[32];
     getInput(uinput, sizeof(uinput));
 
-    if(spawnProcess(uinput) == 0) print("An error occured\n");
+    if(spawnProcess(uinput) == 1) print("An error occurred\n");
 
     exit();
 }

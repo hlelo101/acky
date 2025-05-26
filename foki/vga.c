@@ -5,9 +5,8 @@
 char *video_mem = (char *)VIDEO_MEM_ADDR;
 int colorAttribute = 0x07;
 
-void intToStr(int num, char *str) {  // Black magic ChatGPT generated
-    int i = 0;
-    int isNegative = 0;
+void intToStr(uint32_t num, char *str) {  // Black magic ChatGPT generated
+    uint32_t i = 0;
 
     if (num == 0) {
         str[i++] = '0';
@@ -15,18 +14,9 @@ void intToStr(int num, char *str) {  // Black magic ChatGPT generated
         return;
     }
 
-    if (num < 0) {
-        isNegative = 1;
-        num = -num;
-    }
-
     while (num != 0) {
         str[i++] = (num % 10) + '0';
         num /= 10;
-    }
-
-    if (isNegative) {
-        str[i++] = '-';
     }
 
     str[i] = '\0';
@@ -86,7 +76,7 @@ void print(const char *str) {
     }
 }
 
-void printInt(const int integer) {
+void printInt(const uint32_t integer) {
     char str[10] = {0};
     intToStr(integer, str);
     print(str);

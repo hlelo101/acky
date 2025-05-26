@@ -49,7 +49,7 @@ void main() {
         const uint32_t pid = getProcPIDFromIdx((uint32_t)i);
         getProcInfo(&info[i], pid);
         print(info[i].name);
-        int strSize;
+        int strSize = 0;
         for(; info[i].name[strSize] != '\0'; strSize++);
         for(int j = 0; j < 32 - strSize; j++) print(" ");
         

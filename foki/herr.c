@@ -5,6 +5,7 @@
 
 void herr(const char *str) {
     CLI();
+    asm volatile("push %eax\npush %edx\npush %ecx\npush %ebx\n");
     setColorAttribute(HERR_COLOR_ATTRIBUTE);
     clearScr();
 
@@ -20,6 +21,10 @@ void herr(const char *str) {
     print("  ECX: "); printInt(esp[2]); printChar('\n');
     print("  EBX: "); printInt(esp[3]); printChar('\n');
 
+    print("Last process: "); print(processes[schedulerProcessAt].name); printChar('\n');
+    asm volatile("pop %ebx\npop %ecx\npop %edx\npop %eax\n");
+
+    serialSendString("[Herr]: System stopped due to a kernel panic.\n");
     disableCursor();
     while(1) asm volatile("hlt");
 }
@@ -54,9 +59,10 @@ void intHerr(const char *str, struct interruptFrame *interruptFrame) {
         return;
     }
 
+    print("Last process: "); print(processes[schedulerProcessAt].name); printChar('\n');
     asm volatile("pop %ebx\npop %ecx\npop %edx\npop %eax\n");
 
-
+    serialSendString("[Herr]: System stopped due to a kernel panic.\n");
     disableCursor();
 
     asm volatile("xchgw %bx, %bx"); // Magic break

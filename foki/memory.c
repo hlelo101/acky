@@ -73,6 +73,7 @@ int freeMem(uint32_t memStart) {
             memIndex--;
             
             memcpy((void *)memStart, (void *)(memStart + size), (memList[memIndex].startAddr + memList[memIndex].size) - memStart);
+            serialSendString("[freeMem()]: Deallocated "); serialSendInt(size); serialSendString(" bytes\n");
             return memStart;
         }
     }
