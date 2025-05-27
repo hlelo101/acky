@@ -11,6 +11,8 @@ global getProcPIDFromIdx
 global serialPrint
 global shutdown
 global reboot
+global popMsg
+global sendMsg
 
 section .ackylib
 print:
@@ -135,3 +137,30 @@ reboot:
     mov ebx, 1
     int 0x40
     jmp $
+
+sendMsg:
+    push ebx
+    push ecx
+
+    mov eax, 11
+    mov ebx, 0
+    mov edx, [esp + 12]
+    mov ecx, [esp + 16]
+    int 0x40
+
+    pop ecx
+    pop ebx
+    ret
+
+popMsg:
+    push ebx
+    push ecx
+
+    mov eax, 11
+    mov ebx, 1
+    mov ecx, [esp + 12]
+    int 0x40
+
+    pop ecx
+    pop ebx
+    ret

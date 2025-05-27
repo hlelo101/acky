@@ -7,6 +7,7 @@
 #include "pit.h"
 
 #define DEFAULT_PROCESS_MEMSIZE 0x10000
+#define PROCESS_MSG_QUEUE_SIZE 16
 
 typedef struct {
     uint32_t eax;
@@ -34,7 +35,7 @@ typedef struct {
     generalRegs regs;
     uint32_t pid;
     uint8_t IPCQueueSize;
-    procMsg IPCQueue[16];
+    procMsg IPCQueue[PROCESS_MSG_QUEUE_SIZE];
 } process;
 
 extern process processes[256];

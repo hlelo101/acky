@@ -181,6 +181,48 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
             if(options.ebx == 0) shutdown();
             else if(options.ebx == 1) reboot();
             break;
+        case SC_MSG: // EBX = 0: Send message, EBX = 1: Pop message; ECX = Struct address; EDX = Receiver PID
+            if(options.ebx == 0) {
+                const int idx = getProcessIndexFromPID(options.edx);
+                if(idx == -1) {
+                    serialSendString("[SC_MSG]: Invalid receiver PID\n");
+                    syscallReturn = SRET_ERROR;
+                    break;
+                }
+                if(options.ecx > (uint32_t)processes[schedulerProcessAt].memSize) {
+                    serialSendString("[SC_MSG]: Invalid memory access\n");
+                    syscallReturn = SRET_ERROR;
+                    break;
+                }
+                procMsg *msg = (procMsg *)(options.ecx + processes[schedulerProcessAt].memStart);
+                msg->fromPID = processes[schedulerProcessAt].pid;
+                if(processes[idx].IPCQueueSize >= PROCESS_MSG_QUEUE_SIZE) {
+                    serialSendString("[SC_MSG]: IPC queue is full\n");
+                    syscallReturn = SRET_ERROR;
+                    break;
+                }
+                memcpy(&(processes[idx].IPCQueue[processes[idx].IPCQueueSize++]), msg, sizeof(procMsg));
+            } else if(options.ebx == 1) {
+                if(options.ecx > (uint32_t)processes[schedulerProcessAt].memSize) {
+                    serialSendString("[SC_MSG]: Invalid memory access\n");
+                    syscallReturn = SRET_ERROR;
+                    break;
+                }
+                procMsg *cpyTo = (procMsg *)(options.ecx + processes[schedulerProcessAt].memStart);
+                if(processes[schedulerProcessAt].IPCQueueSize <= 0) {
+                    // We don't print anything because processes will check for new messages in a loop
+                    syscallReturn = SRET_ERROR;
+                    break;
+                }
+                cpyTo->fromPID = processes[schedulerProcessAt].IPCQueue[0].fromPID;
+                memcpy(cpyTo->msg, processes[schedulerProcessAt].IPCQueue[0].msg, sizeof(cpyTo->msg));
+                // Shift the queue
+                for(int i = 0; i < processes[schedulerProcessAt].IPCQueueSize - 1; i++) {
+                    memcpy(&(processes[schedulerProcessAt].IPCQueue[i]), &(processes[schedulerProcessAt].IPCQueue[i + 1]), sizeof(procMsg));
+                }
+                processes[schedulerProcessAt].IPCQueueSize--;
+            }
+            break;
         default:
             // Invalid syscall
             serialSendString("[Warning]: Invalid system call\n");

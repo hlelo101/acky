@@ -12,6 +12,11 @@ enum SyscallReturn {
     SRET_ERROR
 };
 
+typedef struct {
+    uint32_t fromPID;
+    char msg[50];
+} procMsg;
+
 extern void exit();
 extern void print(const char *str);
 extern void getInput(char *buf, const int size);
@@ -24,3 +29,5 @@ extern uint32_t getProcPIDFromIdx(const uint32_t idx);
 extern int serialPrint(const char *str);
 extern void shutdown();
 extern void reboot();
+extern int sendMsg(const uint32_t receiverPID, procMsg *msg);
+extern int popMsg(procMsg *msg);

@@ -80,6 +80,11 @@ userspace:
 	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"Power state\"" user/apps.c user/apps/pstate.c -o ct/pstate.elf
 	@$(OBJCOPY) $(OFLAGS) ct/pstate.elf ct/pstate.aef
 
+	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"IPC Test\"" user/apps.c user/apps/ipctest/ipctest.c -o ct/ipctest.elf
+	@$(OBJCOPY) $(OFLAGS) ct/ipctest.elf ct/ipctest.aef
+	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"IPC Test Child\"" user/apps.c user/apps/ipctest/ipcchild.c -o ct/ipcchild.elf
+	@$(OBJCOPY) $(OFLAGS) ct/ipcchild.elf ct/ipcchild.aef
+
 clean:
 	@echo "Cleaning up..."
 	@rm -r ct/

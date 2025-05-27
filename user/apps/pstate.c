@@ -3,7 +3,7 @@
 void main() {
     char input[2] = {0};
     do {
-        print("Choose an option:\n1. Shutdown\n2. Reboot\n3. Nevermind\n> ");
+        print("Choose an option:\n1. Shutdown\n2. Reboot\n3. Never mind\n> ");
         getInput(input, sizeof(input));
         asm volatile("xchgw %bx, %bx");
         switch(input[0]) {

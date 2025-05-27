@@ -41,6 +41,15 @@ The header is made out of 3 fields:
 | Entry point | i32 integer | The entry point of the program/its start |
 | Signature | 3 bytes | Used to identify AEF files. Should always be "AEF". |
 > You can see how this is implemented in the [startub stub](https://github.com/hlelo101/fms-os/blob/main/user/apps.c) and the [apps](https://github.com/hlelo101/fms-os/tree/main/user/apps) written in assembly.
+# Building
+You will need to have a i386 version of GCC in `~/opt/cross`. The OSDev wiki has a great tutorial on [how to do that](https://wiki.osdev.org/GCC_Cross-Compiler).\
+Then, simply run `make`. Here are the available targets:
+```bash
+make        # Build Acky
+make clean  # Clean up
+make run    # Run with QEMU
+make debug  # Run with Bochs with a debugger
+```
 # What is the goal of this project?
 Acky isn't meant in any ways to become mainstream or a popular OS.\
 The goal of this project is mainly to recreate the OS of my dreams: I used to think a lot (since I was 12 I think?) about a fictional general-purpose operating system who's UI is kind of like the WII's, but also like Windows', with a taskbar, start menu (called "Start center" as it does much more than the start menu). Its look is kind of a modernized version of the 2000s asthetics. It also supports pretty complex stuff such as dynamic kernel swapping, for example.\

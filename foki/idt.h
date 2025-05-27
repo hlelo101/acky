@@ -45,7 +45,8 @@ enum syscalls {
     SC_GETPROCINFO,
     SC_GETPROCPIDFROMIDX,
     SC_SERIALSEND,
-    SC_CHPWR
+    SC_CHPWR,
+    SC_MSG
 };
 
 void initIDT();
