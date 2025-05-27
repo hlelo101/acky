@@ -9,6 +9,7 @@ void main() {
             case '1':
                 print("Shutting down...\n");
                 shutdown();
+                while(1);
                 break;
             case '2':
                 print("Rebooting...\n");
