@@ -78,7 +78,7 @@ userspace:
 	@$(OBJCOPY) $(OFLAGS) ct/ctest.elf ct/ctest.aef
 
 	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"Power state\"" user/apps.c user/apps/pstate.c -o ct/pstate.elf
-	@$(OBJCOPY) $(OFLAGS) ct/pstate.elf ct/pstat.aef
+	@$(OBJCOPY) $(OFLAGS) ct/pstate.elf ct/pstate.aef
 
 clean:
 	@echo "Cleaning up..."
