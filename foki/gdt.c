@@ -25,15 +25,15 @@ void setLDTEntry(int index, uint32_t base, uint32_t limit, uint8_t access, uint8
 
 void initGDT() {
     // Set up the initial LDT
-    setLDTEntry(0, 0, 0x1000, 0xFA, 0xCF);                                      // Code segment; 0x9A for ring 0
-    setLDTEntry(1, 0, 0x1000, 0xF2, 0xCF);                                      // Data segment; 0x92 for ring 0
+    setLDTEntry(0, 0, 0x1000, 0xFA, 0xCF);                                       // Code segment; 0x9A for ring 0
+    setLDTEntry(1, 0, 0x1000, 0xF2, 0xCF);                                       // Data segment; 0x92 for ring 0
     // Set up the GDT
-    setGDTEntry(0, 0, 0, 0, 0);                                                 // Null segment
-    setGDTEntry(1, 0, 0xFFFF, 0x9A, 0xCF);                                      // Code segment
-    setGDTEntry(2, 0, 0xFFFF, 0x92, 0xCF);                                      // Data segment
-    setGDTEntry(3, (uint32_t)&currentLDT, sizeof(currentLDT) - 1, 0xE2, 0xCF);  // LDT segment; 0x82 for ring 0
-    setGDTEntry(5, 0x300000, 0xFFFF, 0xFA, 0xCF);                               // Ring 3 code segment
-    setGDTEntry(6, 0x300000, 0xFFFF, 0xF2, 0xCF);                               // Ring 3 data segment
+    setGDTEntry(0, 0, 0, 0, 0);                                                  // Null segment
+    setGDTEntry(1, 0, 0xFFFFF, 0x9A, 0xCF);                                      // Code segment
+    setGDTEntry(2, 0, 0xFFFFF, 0x92, 0xCF);                                      // Data segment
+    setGDTEntry(3, (uint32_t)&currentLDT, sizeof(currentLDT) - 1, 0xE2, 0xCF);   // LDT segment; 0x82 for ring 0
+    setGDTEntry(5, 0x300000, 0xFFFFF, 0xFA, 0xCF);                               // Ring 3 code segment
+    setGDTEntry(6, 0x300000, 0xFFFFF, 0xF2, 0xCF);                               // Ring 3 data segment
     // TSS
     asm volatile("movl %%esp, %0" : "=r"(realTSS.esp0));
     realTSS.ss0 = 0x10;

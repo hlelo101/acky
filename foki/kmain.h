@@ -5,3 +5,4 @@
 unsigned int getSystemMemory();
 extern unsigned int systemMemoryB;
 extern bool canPreempt;
+extern bool systemInitialized;

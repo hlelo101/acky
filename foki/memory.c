@@ -43,6 +43,18 @@ int strcmp(const char *s1, const char *s2) {
     return *s1 - *s2;
 }
 
+int memcmp(const void *a, const void *b, size_t len) {
+    const unsigned char *pa = (const unsigned char *)a;
+    const unsigned char *pb = (const unsigned char *)b;
+    
+    for (size_t i = 0; i < len; i++) {
+        if (pa[i] != pb[i]) {
+            return (int)(pa[i] - pb[i]);
+        }
+    }
+    return 0;
+}
+
 uint32_t allocMem(uint32_t size) {
     if(memList[memIndex - 1].startAddr + size > getSystemMemory()) herr("Out of memory");
     if(memIndex >= MEM_LIST_SIZE) herr("Memory list overflow");

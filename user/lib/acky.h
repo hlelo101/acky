@@ -22,3 +22,4 @@ extern int getProcCount();
 extern int getProcInfo(procInfo *info, const uint32_t pid);
 extern uint32_t getProcPIDFromIdx(const uint32_t idx);
 extern int serialPrint(const char *str);
+extern void shutdown();

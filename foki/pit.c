@@ -73,7 +73,7 @@ __attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame) {
     tick++;
     asm volatile("pop %eax\npop %edx\npop %ecx\npop %ebx\npop %ebp\npop %edi\npop %esi\n");
     outb(0x20, 0x20);
-    if(!canPreempt) SET_DS(0x0C);
+    if(!canPreempt && systemInitialized) SET_DS(0x0C);
 }
 
 void sleep(uint32_t t) {

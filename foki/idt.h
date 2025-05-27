@@ -44,7 +44,8 @@ enum syscalls {
     SC_GETPORCNUM,
     SC_GETPROCINFO,
     SC_GETPROCPIDFROMIDX,
-    SC_SERIALSEND
+    SC_SERIALSEND,
+    SC_SHUTDOWN
 };
 
 void initIDT();

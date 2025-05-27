@@ -17,6 +17,11 @@ int cmpstr(const char* s1, const char* s2) {
 
 void main() {
     print("Enter your username: "); getInput(username, 10);
+    if(username[0] == '\0') {
+        char defaultUsername[] = "user";
+        for(int i = 0; i < 5; i++) username[i] = defaultUsername[i];
+    }
+
     bool firstLoop = false;
 
     while(1) {

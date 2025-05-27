@@ -8,6 +8,7 @@
 #include "faultHandlers.h"
 #include "process.h"
 #include "gdt.h"
+#include "acpi.h"
 
 gate idt[256];
 idtrDesc idtr;
@@ -175,6 +176,9 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
         case SC_SERIALSEND:
             char serialC = (char)(options.ebx & 0xFF);
             serialSend(serialC);
+            break;
+        case SC_SHUTDOWN:
+            shutdown();
             break;
         default:
             // Invalid syscall

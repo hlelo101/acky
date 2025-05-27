@@ -10,8 +10,10 @@
 #include "fs.h"
 #include "process.h"
 #include "gdt.h"
+#include "acpi.h"
 
 bool canPreempt = false;
+bool systemInitialized = false;
 
 unsigned int systemMemoryB = 0;
 extern void initGDT();
@@ -36,6 +38,7 @@ void kmain(multiboot_info_t* mbd, uint32_t magic) {
     initGDT();
     initPIT(1000);
     initIDT();
+    initACPI();
     ataInit();
     initFS();
     enableCursor(9, 11);
@@ -46,6 +49,7 @@ void kmain(multiboot_info_t* mbd, uint32_t magic) {
 
     serialSendString("[kmain]: Processes spawned\n");
 
+    systemInitialized = true;
     canPreempt = true;
-    while(1);
+    while(1) asm volatile("hlt");
 }

@@ -1,12 +1,13 @@
 CC = ~/opt/cross/bin/i386-elf-gcc
 OBJCOPY = ~/opt/cross/bin/i386-elf-objcopy
 OFLAGS = -O binary
-CFLAGS = -ffreestanding -O2 -Wall -Wextra -nostdlib -mno-80387 -lgcc -c
+CFLAGS = -ffreestanding -O2 -Wall -Wextra -nostdlib -fno-strict-aliasing -mno-80387 -lgcc -c
 USERCFLAGS = -Wl,--no-warn-rwx-segments -ffreestanding -nostdlib -lgcc -I user/lib -T user/apps.ld ct/ackylib.o
 LDFLAGS = -T linker.ld -o acky.bin -ffreestanding -O2 -nostdlib -lgcc
 AS = nasm
 ASFLAGS = -f bin
-OBJS = ct/boot.o ct/kmain.o ct/vga.o ct/io.o ct/memory.o ct/gdt.o ct/idt.o ct/ps2kbd.o ct/herr.o ct/pit.o ct/ata.o ct/serial.o ct/fs.o ct/process.o ct/pitasm.o ct/faultHandlers.o
+OBJS =	ct/boot.o ct/kmain.o ct/vga.o ct/io.o ct/memory.o ct/gdt.o ct/idt.o ct/ps2kbd.o ct/herr.o ct/pit.o ct/ata.o\
+		ct/serial.o ct/fs.o ct/process.o ct/pitasm.o ct/faultHandlers.o ct/acpi.o
 
 # Enabling KVM improves the accuracy of the emulation
 QEMUCMD = qemu-system-i386 -enable-kvm -drive file=acky.iso,format=raw,media=disk -m 124 -serial stdio -display gtk,zoom-to-fit=on -cpu host
@@ -34,6 +35,7 @@ build:
 	@$(CC) $(CFLAGS) foki/fs.c -o ct/fs.o
 	@$(CC) $(CFLAGS) foki/process.c -o ct/process.o
 	@$(CC) $(CFLAGS) foki/faultHandlers.c -o ct/faultHandlers.o
+	@$(CC) $(CFLAGS) foki/acpi.c -o ct/acpi.o
 
 	@$(CC) $(LDFLAGS) $(OBJS)
 	@stat acky.bin
@@ -74,6 +76,9 @@ userspace:
 
 	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"CTest\"" user/apps.c user/apps/ctest.c -o ct/ctest.elf
 	@$(OBJCOPY) $(OFLAGS) ct/ctest.elf ct/ctest.aef
+
+	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"Power state\"" user/apps.c user/apps/pstate.c -o ct/pstate.elf
+	@$(OBJCOPY) $(OFLAGS) ct/pstate.elf ct/pstat.aef
 
 clean:
 	@echo "Cleaning up..."
