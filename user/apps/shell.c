@@ -22,8 +22,6 @@ void main() {
         for(int i = 0; i < 5; i++) username[i] = defaultUsername[i];
     }
 
-    bool firstLoop = false;
-
     while(1) {
         print(username); print("@Acky> ");
         getInput(uinput, INPUT_BUFFER_SIZE);
@@ -31,11 +29,11 @@ void main() {
         if(uinput[0] == '\0') continue;
         
         if(cmpstr(uinput, "cls") == 0) {
-            // For some reasons it bugs weirdly on QEMU so this is the solution...
-            if(!firstLoop)
-                if(cmpstr(uinput, "cls") != 0) goto skipIf;
-
             clearScr();
+            goto end;
+        }
+        if(cmpstr(uinput, "help") == 0) {
+            print("Good luck\n:3\n");
             goto end;
         }
         skipIf:
@@ -68,6 +66,5 @@ void main() {
 
         end:
         uinput[0] = '\0';
-        if(!firstLoop) firstLoop = true;
     }
 }

@@ -1,10 +1,11 @@
 #include <acky.h>
 
 void main() {
-    char input[2];
+    char input[2] = {0};
     do {
         print("Choose an option:\n1. Shutdown\n2. Reboot\n3. Nevermind\n> ");
         getInput(input, sizeof(input));
+        asm volatile("xchgw %bx, %bx");
         switch(input[0]) {
             case '1':
                 print("Shutting down...\n");

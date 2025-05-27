@@ -69,7 +69,7 @@ int getDriveIndexFromLetter(const char c) {
 int iso9660Read(const char *path, int idx, uint8_t *outputBuffer, fileInfo *info) {
     iso9660GetFileInfo(path, idx, info);
 
-    if(info->size == 0) return -1; // Not found
+    if(info->size < 2048) info->size = 2048;
     // Read the file
     commonRead(drives[idx].loc, info->lbaLoc, info->size / 2048, outputBuffer);
 

@@ -16,6 +16,8 @@ Its kernel (named Foki) supports:
 > You can use system calls to start a program, print a character, get a text input from the user, ...
 - The ISO9660 filesystem
 > You can navigate through the folders to load some files.
+- Shutting down with ACPI
+> Can go through ACPI tables, find and "parse" _S5, etc.
 # The filesystem
 Acky's system files are mixed with GRUB's, so you will see some files/directories useful to GRUB and Acky in the root of the disk.\
 Acky's directories are:

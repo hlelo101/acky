@@ -21,6 +21,11 @@ typedef struct {
 } generalRegs;
 
 typedef struct {
+    uint32_t fromPID;
+    char msg[50];
+} procMsg;
+
+typedef struct {
     char name[32];
     bool waiting;
     uint32_t memStart;
@@ -28,6 +33,8 @@ typedef struct {
     uint32_t pcLoc;
     generalRegs regs;
     uint32_t pid;
+    uint8_t IPCQueueSize;
+    procMsg IPCQueue[16];
 } process;
 
 extern process processes[256];
