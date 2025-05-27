@@ -1,8 +1,9 @@
 # Acky OS
-**Acky OS is an operating system made for the x86 architecture.**\
+**Acky OS is an operating system made to run on x86-based computers.**\
 Its kernel (named Foki) supports:
-- Multitasking
-> A simple scheduler with a FIFO queue (with an exception being processes in a "waiting" state) and context switching to make all of that work
+- Preemptive Multitasking
+> A simple scheduler with a FIFO queue (with an exception being processes in a "waiting" state) and context switching to make all of that work\
+> Inter-Process Communication
 - Process isolation
 > Processes run in ring-3, in a memory isolated environment
 - Simple drivers
@@ -51,7 +52,6 @@ make run    # Run with QEMU
 make debug  # Run with Bochs with a debugger
 ```
 # What is the goal of this project?
-Acky isn't meant in any ways to become mainstream or a popular OS.\
 The goal of this project is mainly to recreate the OS of my dreams: I used to think a lot (since I was 12 I think?) about a fictional general-purpose operating system who's UI is kind of like the WII's, but also like Windows', with a taskbar, start menu (called "Start center" as it does much more than the start menu). Its look is kind of a modernized version of the 2000s asthetics. It also supports pretty complex stuff such as dynamic kernel swapping, for example.\
 And now I'm trying to recreate that, to make it real.\
 Yeah, it's pretty ambitious, and I'm probably never going to implement things like dynamic kernel swapping, but I'll try to go as far as I can.
