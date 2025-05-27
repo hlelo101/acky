@@ -10,6 +10,7 @@ global getProcInfo
 global getProcPIDFromIdx
 global serialPrint
 global shutdown
+global reboot
 
 section .ackylib
 print:
@@ -125,5 +126,12 @@ serialPrint:
 
 shutdown:
     mov eax, 10
+    mov ebx, 0
+    int 0x40
+    jmp $
+
+reboot:
+    mov eax, 10
+    mov ebx, 1
     int 0x40
     jmp $

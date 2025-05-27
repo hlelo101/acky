@@ -105,3 +105,13 @@ void shutdown() {
     outw(fadt->PM1aControlBlock, getSLP_TYPa() | 0x2000);
     while(1);
 }
+
+// This technically has nothing to do with ACPI but it's still related
+// to powering on/off/rebooting the computer and I won't make a whole
+// new file just for it...
+void reboot() {
+    uint8_t good = 0x02;
+    while (good & 0x02) good = inb(0x64);
+    outb(0x64, 0xFE);
+    while(1) asm volatile("hlt");
+}

@@ -108,7 +108,7 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
                 break;
             }
             char *path = (char *)(options.ebx + processes[schedulerProcessAt].memStart);
-            serialSendString("Got path: "); serialSendString(path); serialSend('\n');
+            serialSendString("[SC_SPAWNPROC]: Got path: "); serialSendString(path); serialSend('\n');
             FSsetSTI = false;
             const uint32_t newPID = spawnProcess(path);
             FSsetSTI = true;
@@ -177,8 +177,9 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
             char serialC = (char)(options.ebx & 0xFF);
             serialSend(serialC);
             break;
-        case SC_SHUTDOWN:
-            shutdown();
+        case SC_CHPWR:
+            if(options.ebx == 0) shutdown();
+            else if(options.ebx == 1) reboot();
             break;
         default:
             // Invalid syscall

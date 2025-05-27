@@ -108,3 +108,4 @@ typedef struct {
 
 void initACPI();
 void shutdown();
+void reboot();
