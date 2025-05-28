@@ -16,6 +16,16 @@ int cmpstr(const char* s1, const char* s2) {
 }
 
 void main() {
+    do {
+        print("Select the keyboard layout (1: FR, AZERTY; 2: UK, QWERTY): ");
+        getInput(uinput, 2);
+
+        if(uinput[0] == '1') changeLayout(0);
+        else if(uinput[0] == '2') changeLayout(1);
+        else print("[!!]: Invalid layout selection\n");
+    } while(uinput[0] != '1' && uinput[0] != '2');
+    uinput[0] = '\0'; uinput[1] = '\0';
+
     print("Enter your username: "); getInput(username, 10);
     if(username[0] == '\0') {
         char defaultUsername[] = "user";

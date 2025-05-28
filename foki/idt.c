@@ -223,6 +223,13 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
                 processes[schedulerProcessAt].IPCQueueSize--;
             }
             break;
+        case SC_CHLAYOUT: // Change keyboard layout; EBX = 0: FR, EBX = 1: UK
+            if(options.ebx > 1) {
+                syscallReturn = SRET_ERROR;
+                break;
+            }
+            layout = (options.ebx == 0) ? false : true;
+            break;
         default:
             // Invalid syscall
             serialSendString("[Warning]: Invalid system call\n");

@@ -10,5 +10,6 @@ extern char *processBufferLoc;
 extern bool processWaitingForInput;
 extern int inputWaintingPID;
 extern int processBufferSize;
+extern bool layout;
 
 __attribute__((interrupt)) void ps2KBDISR(struct interruptFrame *interruptFrame __attribute__((unused)));

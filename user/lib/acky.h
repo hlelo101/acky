@@ -31,3 +31,4 @@ extern void shutdown();
 extern void reboot();
 extern int sendMsg(const uint32_t receiverPID, procMsg *msg);
 extern int popMsg(procMsg *msg);
+extern int changeLayout(const int layout); // 0 = FR, 1 = UK

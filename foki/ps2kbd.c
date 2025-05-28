@@ -4,7 +4,7 @@ bool leftShift = false;
 bool rightShift = false;
 bool capsLock = false;
 
-// Kenrel info
+// Kernel key
 bool altPressed = false; // 56, 184
 bool leftCtrlPressed = false; // 29, 157
 bool kPressed = false; // 37, 165
@@ -14,12 +14,15 @@ int processBufferPos = 0;
 int processBufferSize = 0;
 bool processWaitingForInput = false;
 int inputWaintingPID = 0;
+bool layout = true; // false = FR, true = UK
 
 char scancodeToChar(const int scancode, bool upperCase) {
-    const char tableUpper[] = "   1234567890°+ AZERTYUIOP¨£QSDFGHJKLM\% µWXCVBN?./§     ";
-    const char tableLower[] = "   &e\"'(-e_ca)=  azertyuiop^$  qsdfghjklmù *wxcvbn,;:!     ";
-    if(upperCase) return tableUpper[scancode + 1];
-    else return tableLower[scancode + 1];
+    const char tableUpperFR[] = "   1234567890°+ AZERTYUIOP¨£QSDFGHJKLM\% µWXCVBN?./§     ";
+    const char tableLowerFR[] = "   &e\"'(-e_ca)=  azertyuiop^$  qsdfghjklmù *wxcvbn,;:!     ";
+    const char tableLowerUK[] = "   1234567890-=  qwertyuiop[]  asdfghjkl;'` #zxcvbnm,./    ";
+    const char tableUpperUK[] = "   !\"£\%^&*()_+  QWERTYUIOP{}  ASDFGHJKL:@  ~ZXCVBNM<>?    ";
+    if(upperCase) return layout ? tableUpperUK[scancode + 1] : tableUpperFR[scancode + 1];
+    else return layout ? tableLowerUK[scancode + 1] : tableLowerFR[scancode + 1];
 }
 
 __attribute__((interrupt)) void ps2KBDISR(struct interruptFrame *interruptFrame __attribute__((unused))) {
@@ -28,7 +31,7 @@ __attribute__((interrupt)) void ps2KBDISR(struct interruptFrame *interruptFrame 
     
     const int scanCode = inb(0x60);
     // You like making key tables don't you?
-    //printInt(scanCode); printChar('|');
+    // printInt(scanCode); printChar('|');
     
     switch(scanCode) {
         case 28: // Enter

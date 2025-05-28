@@ -13,6 +13,7 @@ global shutdown
 global reboot
 global popMsg
 global sendMsg
+global changeLayout
 
 section .ackylib
 print:
@@ -162,5 +163,15 @@ popMsg:
     int 0x40
 
     pop ecx
+    pop ebx
+    ret
+
+changeLayout:
+    push ebx
+
+    mov ebx, [esp + 8]
+    mov eax, 12
+    int 0x40
+
     pop ebx
     ret
