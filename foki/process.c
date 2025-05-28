@@ -18,6 +18,7 @@ int createProcessEntry(const char *name, uint32_t fileSize) {
     processes[processCount].regs.edx = 0;
     processes[processCount].regs.esi = 0;
     processes[processCount].regs.edi = 0;
+    processes[processCount].IPCQueueSize = 0;
     processes[processCount].waiting = false;
     processes[processCount].memStart = allocMem(fileSizeWithStack);
     processes[processCount].pid = tick + processCount;
