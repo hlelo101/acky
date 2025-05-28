@@ -85,6 +85,9 @@ userspace:
 	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"IPC Test Child\"" user/apps.c user/apps/ipctest/ipcchild.c -o ct/ipcchild.elf
 	@$(OBJCOPY) $(OFLAGS) ct/ipcchild.elf ct/ipcchild.aef
 
+	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"Terminal Write\"" user/apps.c user/apps/twrite.c -o ct/twrite.elf
+	@$(OBJCOPY) $(OFLAGS) ct/twrite.elf ct/twrite.aef
+
 clean:
 	@echo "Cleaning up..."
 	@rm -r ct/
