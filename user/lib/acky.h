@@ -17,6 +17,12 @@ typedef struct {
     char msg[50];
 } procMsg;
 
+typedef struct {
+    char name[32];
+    uint32_t size;
+    uint32_t lbaLoc;
+} fileInfo;
+
 extern void exit();
 extern void print(const char *str);
 extern void getInput(char *buf, const int size);
@@ -32,3 +38,11 @@ extern void reboot();
 extern int sendMsg(const uint32_t receiverPID, procMsg *msg);
 extern int popMsg(procMsg *msg);
 extern int changeLayout(const int layout); // 0 = FR, 1 = UK
+extern void enable13hMode();
+extern void setPrimaryCoordinates(int x, int y);
+extern void setSecondaryCoordinates(int x, int y);
+extern int setColor(uint8_t color);
+extern int putPixel(int x, int y);
+extern void drawLine();
+extern int loadFile(const char *path, uint8_t *buffer);
+extern int getFileInfo(const char *path, fileInfo *info);

@@ -14,6 +14,14 @@ global reboot
 global popMsg
 global sendMsg
 global changeLayout
+global enable13hMode
+global setPrimaryCoordinates
+global setSecondaryCoordinates
+global setColor
+global putPixel
+global drawLine
+global loadFile
+global getFileInfo
 
 section .ackylib
 print:
@@ -173,5 +181,111 @@ changeLayout:
     mov eax, 12
     int 0x40
 
+    pop ebx
+    ret
+
+enable13hMode:
+    push ebx
+
+    mov eax, 13
+    mov ebx, 0
+    int 0x40
+
+    pop ebx
+    ret
+
+setPrimaryCoordinates:
+    push ebx
+    push ecx
+    push edx
+
+    mov eax, 13
+    mov ebx, 1
+    mov ecx, [esp + 16]
+    mov edx, [esp + 20]
+    int 0x40
+
+    pop edx
+    pop ecx
+    pop ebx
+    ret
+
+setSecondaryCoordinates:
+    push ebx
+    push ecx
+    push edx
+
+    mov eax, 13
+    mov ebx, 2
+    mov ecx, [esp + 16]
+    mov edx, [esp + 20]
+    int 0x40
+
+    pop edx
+    pop ecx
+    pop ebx
+    ret
+
+setColor:
+    push ebx
+    push ecx
+
+    mov eax, 13
+    mov ebx, 3
+    mov ecx, [esp + 12]
+    int 0x40
+
+    pop ecx
+    pop ebx
+    ret
+
+putPixel:
+    push ebx
+    push ecx
+    push edx
+
+    mov eax, 13
+    mov ebx, 4
+    mov ecx, [esp + 16]
+    mov edx, [esp + 20]
+    int 0x40
+
+    pop edx
+    pop ecx
+    pop ebx
+    
+drawLine:
+    push ebx
+
+    mov eax, 13
+    mov ebx, 5
+    int 0x40
+
+    pop ebx
+    ret
+
+loadFile:
+    push ebx
+    push ecx
+
+    mov eax, 14
+    mov ebx, [esp + 12]  ; Path
+    mov ecx, [esp + 16]  ; Buffer
+    int 0x40
+
+    pop ecx
+    pop ebx
+    ret
+
+getFileInfo:
+    push ebx
+    push ecx
+
+    mov eax, 15
+    mov ebx, [esp + 12] ; Path
+    mov ecx, [esp + 16] ; Struct
+    int 0x40
+
+    pop ecx
     pop ebx
     ret

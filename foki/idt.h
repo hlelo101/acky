@@ -47,7 +47,10 @@ enum syscalls {
     SC_SERIALSEND,
     SC_CHPWR,
     SC_MSG,
-    SC_CHLAYOUT
+    SC_CHLAYOUT,
+    SC_GRAPHICS,
+    SC_LOADFILE,
+    SC_GETFILEINFO
 };
 
 void initIDT();

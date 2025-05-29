@@ -9,6 +9,7 @@
 #include "process.h"
 #include "gdt.h"
 #include "acpi.h"
+#include "fs.h"
 
 gate idt[256];
 idtrDesc idtr;
@@ -59,6 +60,8 @@ void wait() {
     while(1);
 }
 
+int pX, pY, sX, sY;
+uint8_t color;
 __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attribute__((unused))) {
     asm volatile("push %esi\npush %edi\npush %ebp\npush %ebx\npush %ecx\npush %edx\npush %eax\n");
     asm volatile("push %eax");
@@ -229,6 +232,91 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
                 break;
             }
             layout = (options.ebx == 0) ? false : true;
+            break;
+        case SC_GRAPHICS:
+            // EBX:
+            // 0: Set 13h mode; 1: Set primary X Y; 2: Set secondary X Y; 3: Set color; 4: Put a pixel; 5: Draw a line
+            switch(options.ebx) {
+                case 0:
+                    init13h();
+                    break;
+                case 1:
+                    if(options.ecx > 320 || options.edx > 200) {
+                        serialSendString("[SC_GRAPHICS]: Invalid coordinates\n");
+                        syscallReturn = SRET_ERROR;
+                        break;
+                    }
+                    pX = options.ecx;
+                    pY = options.edx;
+                    break;
+                case 2:
+                    if(options.ecx > 320 || options.edx > 200) {
+                        serialSendString("[SC_GRAPHICS]: Invalid coordinates\n");
+                        syscallReturn = SRET_ERROR;
+                        break;
+                    }
+                    sX = options.ecx;
+                    sY = options.edx;
+                    break;
+                case 3:
+                    if(options.ecx > 15) {
+                        serialSendString("[SC_GRAPHICS]: Invalid color\n");
+                        syscallReturn = SRET_ERROR;
+                        break;
+                    }
+                    color = (uint8_t)options.ecx;
+                    break;
+                case 4:
+                    if(options.ecx > 320 || options.edx > 200) {
+                        serialSendString("[SC_GRAPHICS]: Invalid coordinates\n");
+                        syscallReturn = SRET_ERROR;
+                        break;
+                    }
+                    PUT_PIXEL(options.ecx, options.edx, color);
+                    break;
+                case 5:
+                    drawLine(pX, pY, sX, sY, color);
+                    break;
+                default:
+                    serialSendString("[SC_GRAPHICS]: Invalid option\n");
+                    syscallReturn = SRET_ERROR;
+                    break;
+            }
+            break;
+        case SC_LOADFILE: // Load file; EBX = Path, ECX = Buffer address
+            if(options.ebx > (uint32_t)processes[schedulerProcessAt].memSize || options.ecx > (uint32_t)processes[schedulerProcessAt].memSize) {
+                serialSendString("[SC_LOADFILE]: Invalid memory access\n");
+                syscallReturn = SRET_ERROR;
+                break;
+            }
+            char *filePath = (char *)(options.ebx + processes[schedulerProcessAt].memStart);
+            uint8_t *buffer = (uint8_t *)(options.ecx + processes[schedulerProcessAt].memStart);
+            fileInfo tInfo;
+            FSsetSTI = false;
+            if(fsReadFile(filePath, buffer, &tInfo) == -1) {
+                serialSendString("[SC_LOADFILE]: Failed to load file\n");
+                syscallReturn = SRET_ERROR;
+                FSsetSTI = true;
+                break;
+            }
+            FSsetSTI = true;
+            break;
+        case SC_GETFILEINFO: // Get file info, EBX = Path, ECX = Struct address
+            if(options.ebx > (uint32_t)processes[schedulerProcessAt].memSize || options.ecx > (uint32_t)processes[schedulerProcessAt].memSize) {
+                serialSendString("[SC_GETFILEINFO]: Invalid memory access\n");
+                syscallReturn = SRET_ERROR;
+                break;
+            }
+            char *filePathInfo = (char *)(options.ebx + processes[schedulerProcessAt].memStart);
+            fileInfo *fInfo = (fileInfo *)(options.ecx + processes[schedulerProcessAt].memStart);
+            FSsetSTI = false;
+            if(fsGetFileInfo(filePathInfo, fInfo) == -1) {
+                serialSendString("[SC_GETFILEINFO]: Failed to get file info\n");
+                syscallReturn = SRET_ERROR;
+                FSsetSTI = true;
+                break;
+            }
+            FSsetSTI = true;
             break;
         default:
             // Invalid syscall

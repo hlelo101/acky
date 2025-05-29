@@ -36,19 +36,19 @@ void kmain(multiboot_info_t* mbd, uint32_t magic) {
     initSerial();
     serialSendString("Kernel initialization started. Version " VERSION "\n");
     initGDT();
+    enableCursor(9, 11);
     initPIT(1000);
     initIDT();
     initACPI();
     ataInit();
     initFS();
-    enableCursor(9, 11);
     initMem();
     
     spawnProcess("A:/ACKYDAT/KPROC.ASA");
     spawnProcess("A:/ACKYDAT/INIT.ASA");
 
     serialSendString("[kmain]: Processes spawned\n");
-
+    
     systemInitialized = true;
     canPreempt = true;
     while(1) asm volatile("hlt");

@@ -63,7 +63,6 @@ userspace:
 	@$(AS) $(ASFLAGS) user/system/init.asm -o ct/init.asa
 
 	@$(AS) $(ASFLAGS) user/apps/test2.asm -o ct/test2.aef
-	# @$(AS) $(ASFLAGS) user/apps/shell.asm -o ct/shell.aef
 
 	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"Shell\"" user/apps.c user/apps/shell.c -o ct/shell.elf
 	@$(OBJCOPY) $(OFLAGS) ct/shell.elf ct/shell.aef
@@ -87,6 +86,9 @@ userspace:
 
 	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"Terminal Write\"" user/apps.c user/apps/twrite.c -o ct/twrite.elf
 	@$(OBJCOPY) $(OFLAGS) ct/twrite.elf ct/twrite.aef
+
+	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"Window Manager\"" user/apps.c user/apps/wm.c -o ct/wm.elf
+	@$(OBJCOPY) $(OFLAGS) ct/wm.elf ct/wm.aef
 
 clean:
 	@echo "Cleaning up..."
