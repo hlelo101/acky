@@ -184,16 +184,6 @@ changeLayout:
     pop ebx
     ret
 
-enable13hMode:
-    push ebx
-
-    mov eax, 13
-    mov ebx, 0
-    int 0x40
-
-    pop ebx
-    ret
-
 setPrimaryCoordinates:
     push ebx
     push ecx
@@ -259,6 +249,16 @@ drawLine:
 
     mov eax, 13
     mov ebx, 5
+    int 0x40
+
+    pop ebx
+    ret
+
+enable13hMode:
+    push ebx
+
+    mov eax, 13
+    mov ebx, 0
     int 0x40
 
     pop ebx

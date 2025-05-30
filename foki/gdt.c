@@ -35,7 +35,7 @@ void initGDT() {
     setGDTEntry(5, 0x300000, 0xFFFFF, 0xFA, 0xCF);                               // Ring 3 code segment
     setGDTEntry(6, 0x300000, 0xFFFFF, 0xF2, 0xCF);                               // Ring 3 data segment
     // TSS
-    asm volatile("movl %%esp, %0" : "=r"(realTSS.esp0));
+    asm volatile("movl %%ebp, %0" : "=r"(realTSS.esp0));
     realTSS.ss0 = 0x10;
     setGDTEntry(4, (uint32_t)&realTSS, sizeof(realTSS) - 1, 0x89, 0x00);
 

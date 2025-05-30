@@ -9,13 +9,13 @@
 uint32_t tick = 0;
 bool saveRegs = true;
 
-__attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame) {
-    asm volatile("push %esi\npush %edi\npush %ebp\npush %ebx\npush %ecx\npush %edx\npush %eax\n");
+__attribute__((interrupt))
+void PITISR(struct interrupt_frame *interruptFrame) {
+    asm volatile("push %esi\npush %edi\npush %ebx\npush %ecx\npush %edx\npush %eax\n");
     SET_DS(0x10);
     
     if(canPreempt) { // Switch task
         const int currentProcessIndex = getCurrentProcessIdx();
-
         const int nextProcessIndex = getNextProcess();
         if(nextProcessIndex == -1) goto trampolineSetup;
 
@@ -34,13 +34,10 @@ __attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame) {
 
             setProcessPC(currentProcessIndex, (uint32_t)interruptFrame->ip);
         } else saveRegs = true;
-        interruptFrame->ip = (uint32_t)trampoline;
-
-        // serialSendString("[PITISR]: Saving IP: "); serialSendInt(interruptFrame->ip); serialSendString(" for process ");
+        // serialSendString("[PITISR]: Saved EBP: "); serialSendInt(processes[currentProcessIndex].regs.ebp); serialSendString(" for process ");
         // serialSendString(processes[currentProcessIndex].name); serialSend('\n');
         
-        
-        uint32_t processMemSizeWithStack = processes[processCount].memSize + (4096 * 4 + 1);
+        uint32_t processMemSizeWithStack = processes[nextProcessIndex].memSize + (4096 * 4 + 1);
         setLDTEntry(0, processes[nextProcessIndex].memStart, processMemSizeWithStack, 0xFA, 0xCF);
         setLDTEntry(1, processes[nextProcessIndex].memStart, processMemSizeWithStack, 0xF2, 0xCF);
         asm volatile("lldt %0" : : "r"(0x1B)); // Reload the LDT to avoid some weird CPU shittery; selector 0x18 for ring 0
@@ -58,6 +55,7 @@ __attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame) {
         proc_regs_ebp = processes[nextProcessIndex].regs.ebp;
         
         trampolineSetup:
+        interruptFrame->ip = (uint32_t)trampoline;
         asm volatile(
             "pushf\n"
             "pop %0\n"
@@ -67,11 +65,11 @@ __attribute__((interrupt)) void PITISR(struct interrupt_frame *interruptFrame) {
 
         interruptFrame->cs = 0x08;
         interruptFrame->ss = 0x10;
-        interruptFrame->sp = realTSS.esp0;
+        interruptFrame->sp = processes[nextProcessIndex].regs.ebp;
     }
 
     tick++;
-    asm volatile("pop %eax\npop %edx\npop %ecx\npop %ebx\npop %ebp\npop %edi\npop %esi\n");
+    asm volatile("pop %eax\npop %edx\npop %ecx\npop %ebx\npop %edi\npop %esi\n");
     outb(0x20, 0x20);
     if(!canPreempt && systemInitialized) SET_DS(0x0C);
 }

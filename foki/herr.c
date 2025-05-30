@@ -36,6 +36,8 @@ void intHerr(const char *str, struct interruptFrame *interruptFrame) {
     setColorAttribute(HERR_COLOR_ATTRIBUTE);
     clearScr();
 
+    serialSendString("[Herr]: System stopped due to a kernel panic.\n[Herr]: Error message: ");
+    serialSendString(str); serialSend('\n');
     print("### OS ERROR ###\nSystem version: " VERSION "\n");
     print("Error message: "); print(str); printChar('\n');
     print("\nThis is a fatal error.\nSystem halted.\n\n");
@@ -62,7 +64,6 @@ void intHerr(const char *str, struct interruptFrame *interruptFrame) {
     print("Last process: "); print(processes[schedulerProcessAt].name); printChar('\n');
     asm volatile("pop %ebx\npop %ecx\npop %edx\npop %eax\n");
 
-    serialSendString("[Herr]: System stopped due to a kernel panic.\n");
     disableCursor();
 
     asm volatile("xchgw %bx, %bx"); // Magic break

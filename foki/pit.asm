@@ -18,24 +18,19 @@ trampoline:
     mov edx, [proc_regs_edx]
     mov esi, [proc_regs_esi]
     mov edi, [proc_regs_edi]
-
-    push ax
+    mov ebp, [proc_regs_ebp]
 
     ; Set DS
-    mov ax, 0x0F ; 0x0C for ring 3
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
+    mov dx, 0x0F ; 0x0C for ring 3
+    mov ds, dx
+    mov es, dx
+    mov fs, dx
+    mov gs, dx
 
-    pop ax
-
-    mov ebp, cs:[proc_regs_ebp]
-
-    push 0x0F                       ; Set SS
+    push dword 0x0F                 ; Set SS
     push dword cs:[proc_regs_esp]   ; Set ESP
     push dword cs:[proc_flags]      ; Restore the flags
-    push 0x07                       ; Set CS, 0x04 for ring 0
+    push dword 0x07                 ; Set CS, 0x04 for ring 0
     push dword cs:[proc_ip]         ; Set EIP
     ; All of these values will be popped off by iret
     iret

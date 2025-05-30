@@ -24,10 +24,10 @@ __attribute__((interrupt)) void nmIntErr(struct interruptFrame *interruptFrame) 
     SET_ES(0x0F);
 }
 
-__attribute__((interrupt)) void breakErr(struct interruptFrame *interruptFrame) {
+__attribute__((interrupt)) void breakErr(struct interruptFrame *interruptFrame __attribute__((unused))) {
     SET_DS(0x10);
     SET_ES(0x10);
-    intHerr("Breakpoint", interruptFrame);
+    serialSendString("[Break]: Breakpoint hit\n");
     SET_DS(0x0F);
     SET_ES(0x0F);
 }

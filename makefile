@@ -2,7 +2,7 @@ CC = ~/opt/cross/bin/i386-elf-gcc
 OBJCOPY = ~/opt/cross/bin/i386-elf-objcopy
 OFLAGS = -O binary
 CFLAGS = -ffreestanding -O2 -Wall -Wextra -nostdlib -fno-strict-aliasing -mno-80387 -lgcc -c
-USERCFLAGS = -Wl,--no-warn-rwx-segments -ffreestanding -nostdlib -lgcc -I user/lib -T user/apps.ld ct/ackylib.o
+USERCFLAGS = -Wl,--no-warn-rwx-segments -ffreestanding -nostdlib -lgcc -I user/lib -fomit-frame-pointer -T user/apps.ld ct/ackylib.o
 LDFLAGS = -T linker.ld -o acky.bin -ffreestanding -O2 -nostdlib -lgcc
 AS = nasm
 ASFLAGS = -f bin
@@ -53,6 +53,8 @@ mkiso:
 	@cp ct/*.aef iso/progdat/
 
 	@echo "Hai! Test" > iso/test.txt
+	@mkdir iso/progdat/wm/
+	@cp user/apps/WM\ Media/* iso/progdat/wm/
 	@grub-mkrescue -o acky.iso iso
 
 userspace:

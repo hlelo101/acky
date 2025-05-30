@@ -71,7 +71,7 @@ int iso9660Read(const char *path, int idx, uint8_t *outputBuffer, fileInfo *info
 
     if(info->size < 2048) info->size = 2048;
     // Read the file
-    commonRead(drives[idx].loc, info->lbaLoc, info->size / 2048, outputBuffer);
+    commonRead(drives[idx].loc, info->lbaLoc, (info->size + 2047) / 2048, outputBuffer);
 
     return 0;
 }
