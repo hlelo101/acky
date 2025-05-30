@@ -11,7 +11,7 @@
 #define DATA(reg) ((reg) + 1) // Won't work with the attribute register
 #define GRAPHICS_MEM_ADDR 0xA0000
 #define PUT_PIXEL(x, y, c) \
-    *(uint16_t *)(GRAPHICS_MEM_ADDR + (y) * 320 + (x)) = (c)
+    *((uint8_t *)(GRAPHICS_MEM_ADDR + (y) * 320 + (x))) = (c)
 
 void printChar(const char c);
 void setColorAttribute(const int attr);

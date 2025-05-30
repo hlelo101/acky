@@ -1,7 +1,6 @@
 #include "vga.h"
 #include "memory.h"
 #include "io.h"
-#include "serial.h"
 
 /*
 *   TEXT MODE
