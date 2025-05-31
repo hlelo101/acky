@@ -25,7 +25,7 @@ typedef struct {
     uint32_t colorsImportant; // 0 = all
 } __attribute__((packed)) BMPInfoHeader;
 
-uint8_t imageData[2500];
+uint8_t imageData[2500], mouseBG[4 * 4] = {WM_BG_COLOR};
 int mouseX = 50, mouseY = 50;
 
 // Some utilities because we still don't have a stdlib
@@ -97,8 +97,8 @@ void parseBMP(const uint8_t* data, int x, int y) {
     }
 }
 
-
 void drawRectangle(int x, int y, int width, int height, uint8_t color) {
+    setColor(color);
     for(int i = 0; i < height; i++) {
         for(int j = 0; j < width; j++) {
             putPixel(x + j, y + i);
@@ -118,16 +118,21 @@ void main() {
     parseBMP(imageData, 60, 150);
     setColor(0);
     if(loadFile("A:/PROGDAT/WM/MOUSE2.BMP", imageData) == SRET_ERROR) return; // A:/PROGDAT/WM/MOUSESMA.BMP
-    parseBMP(imageData, mouseX, mouseY);
+    // drawMouse(mouseX, mouseY);
 
     procMsg msg;
     while(1) {
         if(popMsg(&msg) == SRET_SUCCESS) {
             mouseMovMsg *mouseMsg = (mouseMovMsg *)msg.msg;
             if(strcmp(mouseMsg->signature, "MOUMOV") == 0) {
-                setColor(WM_BG_COLOR);
-                drawRectangle(mouseX, mouseY, 4, 4, 0);
-                setColor(0);
+                // Draw the mouse background
+                for(int i = 0; i < 4; i++) {
+                    for(int j = 0; j < 4; j++) {
+                        setColor(mouseBG[i * 4 + j]);
+                        putPixel(mouseX + j, mouseY + i);
+                    }
+                }
+                // drawRectangle(mouseX, 4, WM_BG_COLOR);
                 mouseX += mouseMsg->x;
                 mouseY -= mouseMsg->y;
                 if(mouseX < 0) mouseX = 0;
@@ -135,6 +140,14 @@ void main() {
                 if(mouseX > 320 - 4) mouseX = 320 - 4;
                 if(mouseY > 200 - 4) mouseY = 200 - 4;
 
+                // Save the background
+                for(int i = 0; i < 4; i++) {
+                    for(int j = 0; j < 4; j++) {
+                        mouseBG[i * 4 + j] = getPixel(mouseX + j, mouseY + i);
+                    }
+                }
+                // Draw the mouse
+                setColor(0);
                 parseBMP(imageData, mouseX, mouseY);
             } else {
                 serialPrint("Unknown message received\n");

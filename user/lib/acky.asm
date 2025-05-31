@@ -23,6 +23,7 @@ global drawLine
 global loadFile
 global getFileInfo
 global getScreenOwnership
+global getPixel
 
 section .ackylib
 print:
@@ -272,6 +273,22 @@ getScreenOwnership:
     mov ebx, 6
     int 0x40
 
+    pop ebx
+    ret
+
+getPixel:
+    push ebx
+    push ecx
+    push edx
+
+    mov eax, 13
+    mov ebx, 7
+    mov ecx, [esp + 16] ; X
+    mov edx, [esp + 20] ; Y
+    int 0x40
+
+    pop edx
+    pop ecx
     pop ebx
     ret
 

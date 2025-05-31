@@ -12,6 +12,8 @@
 #define GRAPHICS_MEM_ADDR 0xA0000
 #define PUT_PIXEL(x, y, c) \
     *((uint8_t *)(GRAPHICS_MEM_ADDR + (y) * 320 + (x))) = (c)
+#define GET_PIXEL(x, y) \
+    *((uint8_t *)(GRAPHICS_MEM_ADDR + (y) * 320 + (x)))
 
 extern uint32_t ownerPID;
 

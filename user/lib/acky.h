@@ -47,3 +47,4 @@ extern void drawLine();
 extern int loadFile(const char *path, uint8_t *buffer);
 extern int getFileInfo(const char *path, fileInfo *info);
 extern void getScreenOwnership();
+extern uint8_t getPixel(uint32_t x, uint32_t y);
