@@ -13,6 +13,8 @@
 #define PUT_PIXEL(x, y, c) \
     *((uint8_t *)(GRAPHICS_MEM_ADDR + (y) * 320 + (x))) = (c)
 
+extern uint32_t ownerPID;
+
 void printChar(const char c);
 void setColorAttribute(const int attr);
 void print(const char *str);

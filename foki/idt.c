@@ -235,7 +235,7 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
             break;
         case SC_GRAPHICS:
             // EBX:
-            // 0: Set 13h mode; 1: Set primary X Y; 2: Set secondary X Y; 3: Set color; 4: Put a pixel; 5: Draw a line
+            // 0: Set 13h mode; 1: Set primary X Y; 2: Set secondary X Y; 3: Set color; 4: Put a pixel; 5: Draw a line; 6: Get screen ownership
             switch(options.ebx) {
                 case 0:
                     init13h();
@@ -276,6 +276,11 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
                     break;
                 case 5:
                     drawLine(pX, pY, sX, sY, color);
+                    break;
+                case 6:
+                    ownerPID = processes[schedulerProcessAt].pid;
+                    serialSendString("[SC_GRAPHICS]: Screen ownership set to PID ");
+                    serialSendInt(ownerPID); serialSend('\n');
                     break;
                 default:
                     serialSendString("[SC_GRAPHICS]: Invalid option\n");

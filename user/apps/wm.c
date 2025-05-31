@@ -1,6 +1,7 @@
 #include <acky.h>
 
 #define CLEAR() for(int i = 0; i < 320 * 200; i++) { putPixel(i % 320, i / 320); }
+#define WM_BG_COLOR 3
 
 typedef struct {
     char signature[2]; // "BM'
@@ -25,6 +26,50 @@ typedef struct {
 } __attribute__((packed)) BMPInfoHeader;
 
 uint8_t imageData[2500];
+int mouseX = 50, mouseY = 50;
+
+// Some utilities because we still don't have a stdlib
+int strcmp(const char *s1, const char *s2) {
+    while(*s1 && *s2 && *s1 == *s2) {
+        s1++;
+        s2++;
+    }
+    return *s1 - *s2;
+}
+
+void intToStr(int N, char *str) {
+    int i = 0;
+
+    int sign = N;
+
+    if (N < 0)
+        N = -N;
+
+    while (N > 0) {
+        str[i++] = N % 10 + '0';
+      	N /= 10;
+    } 
+
+    if (sign < 0) {
+        str[i++] = '-';
+    }
+
+    str[i] = '\0';
+
+    for (int j = 0, k = i - 1; j < k; j++, k--) {
+        char temp = str[j];
+        str[j] = str[k];
+        str[k] = temp;
+    }
+}
+
+typedef struct {
+    char signature[7]; // "MOUMOV"
+    int8_t x;
+    int8_t y;
+} __attribute__((packed)) mouseMovMsg;
+
+// BMP stuff
 
 void parseBMP(const uint8_t* data, int x, int y) {
     BMPHeader *header = (BMPHeader *)data;
@@ -52,10 +97,20 @@ void parseBMP(const uint8_t* data, int x, int y) {
     }
 }
 
+
+void drawRectangle(int x, int y, int width, int height, uint8_t color) {
+    for(int i = 0; i < height; i++) {
+        for(int j = 0; j < width; j++) {
+            putPixel(x + j, y + i);
+        }
+    }
+}
+
 void main() {
+    getScreenOwnership(); // Used to indicate to the kernel where to redirect mouse events, etc
     enable13hMode();
 
-    setColor(3);
+    setColor(WM_BG_COLOR);
     CLEAR();
 
     setColor(1);
@@ -63,7 +118,27 @@ void main() {
     parseBMP(imageData, 60, 150);
     setColor(0);
     if(loadFile("A:/PROGDAT/WM/MOUSE2.BMP", imageData) == SRET_ERROR) return; // A:/PROGDAT/WM/MOUSESMA.BMP
-    parseBMP(imageData, 10, 10);
+    parseBMP(imageData, mouseX, mouseY);
 
-    exit();
+    procMsg msg;
+    while(1) {
+        if(popMsg(&msg) == SRET_SUCCESS) {
+            mouseMovMsg *mouseMsg = (mouseMovMsg *)msg.msg;
+            if(strcmp(mouseMsg->signature, "MOUMOV") == 0) {
+                setColor(WM_BG_COLOR);
+                drawRectangle(mouseX, mouseY, 4, 4, 0);
+                setColor(0);
+                mouseX += mouseMsg->x;
+                mouseY -= mouseMsg->y;
+                if(mouseX < 0) mouseX = 0;
+                if(mouseY < 0) mouseY = 0;
+                if(mouseX > 320 - 4) mouseX = 320 - 4;
+                if(mouseY > 200 - 4) mouseY = 200 - 4;
+
+                parseBMP(imageData, mouseX, mouseY);
+            } else {
+                serialPrint("Unknown message received\n");
+            }
+        }
+    }
 }

@@ -2,6 +2,8 @@
 #include "memory.h"
 #include "io.h"
 
+uint32_t ownerPID = 0;
+
 /*
 *   TEXT MODE
 */

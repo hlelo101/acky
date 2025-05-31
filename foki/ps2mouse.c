@@ -1,7 +1,9 @@
 #include "ps2mouse.h"
 #include "vga.h"
+#include "process.h"
 #include "kmain.h"
 #include "utils.h"
+#include "memory.h"
 
 uint8_t mouse_cycle = 0;
 int8_t mouse_byte[3];
@@ -31,7 +33,17 @@ void ps2MouseISR(struct interruptFrame *frame __attribute__((unused))) {
             mouse_byte[2] = inb(0x60);
             mouse_x = mouse_byte[1];
             mouse_y = mouse_byte[2];
-            mouse_cycle=0;
+            mouse_cycle = 0;
+            if(ownerPID != 0) {
+                procMsg msg;
+                mouseMovMsg mouseMsg;
+                msg.fromPID = 0; // Indicated kernel
+                strcpy(mouseMsg.signature, "MOUMOV");
+                mouseMsg.x = mouse_x;
+                mouseMsg.y = mouse_y;
+                memcpy(msg.msg, &mouseMsg, sizeof(mouseMovMsg));
+                sendMessageToProcess(ownerPID, &msg);
+            }
             break;
     }
 

@@ -4,6 +4,12 @@
 #include "io.h"
 #include "idt.h"
 
+typedef struct {
+    char signature[7]; // "MOUMOV"
+    int8_t x;
+    int8_t y;
+}__attribute__((packed)) mouseMovMsg;
+
 void initPS2Mouse();
 __attribute__((interrupt))
 void ps2MouseISR(struct interruptFrame *frame __attribute__((unused)));

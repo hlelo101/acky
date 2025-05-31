@@ -22,6 +22,7 @@ global putPixel
 global drawLine
 global loadFile
 global getFileInfo
+global getScreenOwnership
 
 section .ackylib
 print:
@@ -259,6 +260,16 @@ enable13hMode:
 
     mov eax, 13
     mov ebx, 0
+    int 0x40
+
+    pop ebx
+    ret
+
+getScreenOwnership:
+    push ebx
+
+    mov eax, 13
+    mov ebx, 6
     int 0x40
 
     pop ebx

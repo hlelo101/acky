@@ -46,3 +46,4 @@ extern int putPixel(uint32_t x, uint32_t y);
 extern void drawLine();
 extern int loadFile(const char *path, uint8_t *buffer);
 extern int getFileInfo(const char *path, fileInfo *info);
+extern void getScreenOwnership();
