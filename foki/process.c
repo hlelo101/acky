@@ -107,3 +107,17 @@ void kill(int pid) {
     }
     processCount--;
 }
+
+int sendMessageToProcess(int pid, procMsg *msg) {
+    const int idx = getProcessIndexFromPID(pid);
+    if(idx == -1) return 0;
+
+    if(processes[idx].IPCQueueSize >= PROCESS_MSG_QUEUE_SIZE) {
+        serialSendString("[sendMessageToProcess()]: IPC queue is full\n");
+        return 0;
+    }
+
+    msg->fromPID = processes[schedulerProcessAt].pid;
+    memcpy(&(processes[idx].IPCQueue[processes[idx].IPCQueueSize++]), msg, sizeof(procMsg));
+    return 1;
+}

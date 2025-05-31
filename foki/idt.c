@@ -10,6 +10,7 @@
 #include "gdt.h"
 #include "acpi.h"
 #include "fs.h"
+#include "ps2mouse.h"
 
 gate idt[256];
 idtrDesc idtr;
@@ -198,9 +199,8 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
                     break;
                 }
                 procMsg *msg = (procMsg *)(options.ecx + processes[schedulerProcessAt].memStart);
-                msg->fromPID = processes[schedulerProcessAt].pid;
-                if(processes[idx].IPCQueueSize >= PROCESS_MSG_QUEUE_SIZE) {
-                    serialSendString("[SC_MSG]: IPC queue is full\n");
+                if(!sendMessageToProcess(processes[schedulerProcessAt].pid, msg)) {
+                    serialSendString("[SC_MSG]: Failed to send message\n");
                     syscallReturn = SRET_ERROR;
                     break;
                 }
@@ -372,11 +372,12 @@ void initIDT() {
     setIDTGate(0x21, (uint32_t)ps2KBDISR, 0x08, 0x8E);      // Keyboard
     setIDTGate(0x20, (uint32_t)PITISR, 0x08, 0x8E);         // Timer
     setIDTGate(0x27, (uint32_t)IRQ7, 0x08, 0xEE);           // Fucking IRQ7 that triggers for no fucking reason why the fuck are you redundant you stupid motherfu-
+    setIDTGate(0x2C, (uint32_t)ps2MouseISR, 0x08, 0x8E);    // PS/2 Mouse
     setIDTGate(0x40, (uint32_t)sysCall, 0x08, 0xEE);        // System calls; flags=0x8E for ring 0
     // Load!
     __asm__ __volatile__ ("lidtl (%0)" :: "r" (&idtr));
 
-    // Enable IRQ1 and IRQ0s
-    PICMap(0x20, 0x28, 0xFC, 0xFF);
-    asm volatile ("sti");
+    // Enable some IRQs and initialize the PIC
+    PICMap(0x20, 0x28, 0xF8, 0xEF);
+    asm volatile("sti");
 }

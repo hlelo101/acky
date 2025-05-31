@@ -105,8 +105,8 @@ void ataInit() {
     ataIdentify(true);
     ataIdentify(false);
 
-    print("[ATA]: Found " ); printInt(boolToInt(primaryMasterPresent) + boolToInt(primarySlavePresent));
-    print((boolToInt(primaryMasterPresent) + boolToInt(primarySlavePresent)) == 1 ? " drive\n" : " drives\n");
+    serialSendString("[ATA]: Found " ); serialSendInt(boolToInt(primaryMasterPresent) + boolToInt(primarySlavePresent));
+    serialSendString((boolToInt(primaryMasterPresent) + boolToInt(primarySlavePresent)) == 1 ? " drive\n" : " drives\n");
 }
 
 bool ataDiskPresent(bool master) {

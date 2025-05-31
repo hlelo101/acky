@@ -42,7 +42,7 @@ extern void enable13hMode();
 extern void setPrimaryCoordinates(int x, int y);
 extern void setSecondaryCoordinates(int x, int y);
 extern int setColor(uint8_t color);
-extern int putPixel(int x, int y);
+extern int putPixel(uint32_t x, uint32_t y);
 extern void drawLine();
 extern int loadFile(const char *path, uint8_t *buffer);
 extern int getFileInfo(const char *path, fileInfo *info);

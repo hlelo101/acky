@@ -11,6 +11,7 @@
 #include "process.h"
 #include "gdt.h"
 #include "acpi.h"
+#include "ps2mouse.h"
 
 bool canPreempt = false;
 bool systemInitialized = false;
@@ -33,6 +34,7 @@ void kmain(multiboot_info_t* mbd, uint32_t magic) {
     printInt(systemMemoryB / 1000 / 1000); print("MB Ready\n");
     if(mbd->mods_count > 0) herr("Unsupported kernel modules loaded");
 
+    print("Starting kernel... ");
     initSerial();
     serialSendString("Kernel initialization started. Version " VERSION "\n");
     initGDT();
@@ -43,12 +45,14 @@ void kmain(multiboot_info_t* mbd, uint32_t magic) {
     ataInit();
     initFS();
     initMem();
+    initPS2Mouse();
     
     spawnProcess("A:/ACKYDAT/KPROC.ASA");
     spawnProcess("A:/ACKYDAT/INIT.ASA");
-
-    serialSendString("[kmain]: Processes spawned\n");
     
+    serialSendString("[kmain]: Kernel initialization completed\n");
+    
+    print("Done\n");
     systemInitialized = true;
     canPreempt = true;
     while(1) asm volatile("hlt");

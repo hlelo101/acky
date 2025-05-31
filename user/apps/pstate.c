@@ -5,7 +5,6 @@ void main() {
     do {
         print("Choose an option:\n1. Shutdown\n2. Reboot\n3. Never mind\n> ");
         getInput(input, sizeof(input));
-        asm volatile("xchgw %bx, %bx");
         switch(input[0]) {
             case '1':
                 print("Shutting down...\n");

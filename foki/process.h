@@ -50,3 +50,4 @@ int getProcessIndexFromPID(uint32_t pid);
 extern int schedulerProcessAt;
 extern int processCount;
 int getNextProcessDry();
+int sendMessageToProcess(int pid, procMsg *msg);

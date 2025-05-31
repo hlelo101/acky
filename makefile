@@ -7,7 +7,7 @@ LDFLAGS = -T linker.ld -o acky.bin -ffreestanding -O2 -nostdlib -lgcc
 AS = nasm
 ASFLAGS = -f bin
 OBJS =	ct/boot.o ct/kmain.o ct/vga.o ct/io.o ct/memory.o ct/gdt.o ct/idt.o ct/ps2kbd.o ct/herr.o ct/pit.o ct/ata.o\
-		ct/serial.o ct/fs.o ct/process.o ct/pitasm.o ct/faultHandlers.o ct/acpi.o
+		ct/serial.o ct/fs.o ct/process.o ct/pitasm.o ct/faultHandlers.o ct/acpi.o ct/ps2mouse.o
 
 # Enabling KVM improves the accuracy of the emulation
 QEMUCMD = qemu-system-i386 -enable-kvm -drive file=acky.iso,format=raw,media=disk -m 124 -serial stdio -display gtk,zoom-to-fit=on -cpu host
@@ -36,6 +36,7 @@ build:
 	@$(CC) $(CFLAGS) foki/process.c -o ct/process.o
 	@$(CC) $(CFLAGS) foki/faultHandlers.c -o ct/faultHandlers.o
 	@$(CC) $(CFLAGS) foki/acpi.c -o ct/acpi.o
+	@$(CC) $(CFLAGS) foki/ps2mouse.c -o ct/ps2mouse.o
 
 	@$(CC) $(LDFLAGS) $(OBJS)
 	@stat acky.bin
@@ -82,7 +83,7 @@ userspace:
 	@$(OBJCOPY) $(OFLAGS) ct/pstate.elf ct/pstate.aef
 
 	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"IPC Test\"" user/apps.c user/apps/ipctest/ipctest.c -o ct/ipctest.elf
-	@$(OBJCOPY) $(OFLAGS) ct/ipctest.elf ct/ipctest.aef
+	@$(OBJCOPY) $(OFLAGS) ct/ipctest.elf ct/ipct.aef
 	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"IPC Test Child\"" user/apps.c user/apps/ipctest/ipcchild.c -o ct/ipcchild.elf
 	@$(OBJCOPY) $(OFLAGS) ct/ipcchild.elf ct/ipcchild.aef
 
