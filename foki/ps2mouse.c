@@ -37,10 +37,11 @@ void ps2MouseISR(struct interruptFrame *frame __attribute__((unused))) {
             if(ownerPID != 0) {
                 procMsg msg;
                 mouseMovMsg mouseMsg;
-                msg.fromPID = 0; // Indicated kernel
+                msg.fromPID = 0; // Indicates kernel
                 strcpy(mouseMsg.signature, "MOUMOV");
                 mouseMsg.x = mouse_x;
                 mouseMsg.y = mouse_y;
+                mouseMsg.status = mouse_byte[0];
                 memcpy(msg.msg, &mouseMsg, sizeof(mouseMovMsg));
                 sendMessageToProcess(ownerPID, &msg);
             }
@@ -71,7 +72,7 @@ inline void mouse_wait(uint8_t a_type) {
     }
 }
 
-inline void mouse_write(uint8_t a_write) {
+inline void mouseWrite(uint8_t a_write) {
     // Wait to be able to send a command
     mouse_wait(1);
     // Tell the mouse we are sending a command
@@ -82,7 +83,7 @@ inline void mouse_write(uint8_t a_write) {
     outb(0x60, a_write);
 }
 
-uint8_t mouse_read() {
+uint8_t mouseRead() {
     // Gets response from mouse
     mouse_wait(0); 
     return inb(0x60);
@@ -91,11 +92,11 @@ uint8_t mouse_read() {
 void initPS2Mouse() {
     uint8_t _status;
 
-    //Enable the auxiliary mouse device
+    // Enable the auxiliary mouse device
     mouse_wait(1);
     outb(0x64, 0xA8);
 
-    //Enable the interrupts
+    // Enable the interrupts
     mouse_wait(1);
     outb(0x64, 0x20);
     mouse_wait(0);
@@ -105,23 +106,18 @@ void initPS2Mouse() {
     mouse_wait(1);
     outb(0x60, _status);
 
-    //Tell the mouse to use default settings
-    mouse_write(0xF6);
-    mouse_read();  //Acknowledge
+    // Tell the mouse to use default settings
+    mouseWrite(0xF6);
+    mouseRead();
 
-    mouse_write(0xE8);
-    mouse_read();
+    // Set the sample rate
+    mouseWrite(0xF3);
+    mouseRead();
 
-    mouse_write(0x00);
-    mouse_read();
+    mouseWrite(200);
+    mouseRead();
 
-    mouse_write(0xF3);
-    mouse_read();
-
-    mouse_write(200);
-    mouse_read();
-
-    //Enable the mouse
-    mouse_write(0xF4);
-    mouse_read();  //Acknowledge
+    // Enable the mouse
+    mouseWrite(0xF4);
+    mouseRead();
 }

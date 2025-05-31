@@ -67,7 +67,8 @@ typedef struct {
     char signature[7]; // "MOUMOV"
     int8_t x;
     int8_t y;
-} __attribute__((packed)) mouseMovMsg;
+    uint8_t status;
+}__attribute__((packed)) mouseMovMsg;
 
 // BMP stuff
 
@@ -114,16 +115,22 @@ void main() {
     CLEAR();
 
     setColor(1);
-    if(loadFile("A:/PROGDAT/WM/BACK.BMP", imageData) == SRET_ERROR) return;
+    if(loadFile("A:/PROGDAT/WM/BACK.BMP", imageData) == SRET_ERROR) {
+        serialPrint("An error occurred while loading \"A:/PROGDAT/WM/BACK.BMP\"");
+        while(1);
+    }
     parseBMP(imageData, 60, 150);
     setColor(0);
-    if(loadFile("A:/PROGDAT/WM/MOUSE2.BMP", imageData) == SRET_ERROR) return; // A:/PROGDAT/WM/MOUSESMA.BMP
-    // drawMouse(mouseX, mouseY);
+    if(loadFile("A:/PROGDAT/WM/MOUSE2.BMP", imageData) == SRET_ERROR) { // A:/PROGDAT/WM/MOUSESMA.BMP
+        serialPrint("An error occurred while loading \"A:/PROGDAT/MOUSE2.BMP\"");
+        while(1);
+    } 
 
     procMsg msg;
+    mouseMovMsg *mouseMsg;
     while(1) {
         if(popMsg(&msg) == SRET_SUCCESS) {
-            mouseMovMsg *mouseMsg = (mouseMovMsg *)msg.msg;
+            mouseMsg = (mouseMovMsg *)msg.msg;
             if(strcmp(mouseMsg->signature, "MOUMOV") == 0) {
                 // Draw the mouse background
                 for(int i = 0; i < 4; i++) {
@@ -132,7 +139,6 @@ void main() {
                         putPixel(mouseX + j, mouseY + i);
                     }
                 }
-                // drawRectangle(mouseX, 4, WM_BG_COLOR);
                 mouseX += mouseMsg->x;
                 mouseY -= mouseMsg->y;
                 if(mouseX < 0) mouseX = 0;
@@ -149,6 +155,9 @@ void main() {
                 // Draw the mouse
                 setColor(0);
                 parseBMP(imageData, mouseX, mouseY);
+
+                if(mouseMsg->status & 0x01) serialPrint("Left pressed\n");
+                if(mouseMsg->status & 0x02) serialPrint("Right pressed\n");
             } else {
                 serialPrint("Unknown message received\n");
             }

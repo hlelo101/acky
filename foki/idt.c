@@ -242,7 +242,7 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
                     break;
                 case 1:
                     if(options.ecx > 320 || options.edx > 200) {
-                        serialSendString("[SC_GRAPHICS]: Invalid coordinates\n");
+                        serialSendString("[SC_GRAPHICS, 1]: Invalid coordinates\n");
                         syscallReturn = SRET_ERROR;
                         break;
                     }
@@ -251,7 +251,7 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
                     break;
                 case 2:
                     if(options.ecx > 320 || options.edx > 200) {
-                        serialSendString("[SC_GRAPHICS]: Invalid coordinates\n");
+                        serialSendString("[SC_GRAPHICS, 2]: Invalid coordinates\n");
                         syscallReturn = SRET_ERROR;
                         break;
                     }
@@ -260,7 +260,7 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
                     break;
                 case 3:
                     if(options.ecx > 15) {
-                        serialSendString("[SC_GRAPHICS]: Invalid color\n");
+                        serialSendString("[SC_GRAPHICS, 3]: Invalid color\n");
                         syscallReturn = SRET_ERROR;
                         break;
                     }
@@ -268,7 +268,9 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
                     break;
                 case 4:
                     if(options.ecx > 320 || options.edx > 200) {
-                        serialSendString("[SC_GRAPHICS]: Invalid coordinates\n");
+                        serialSendString("[SC_GRAPHICS, 4]: Invalid coordinates, got: ");
+                        serialSendInt(options.ecx); serialSendString(", "); serialSendInt(options.edx);
+                        serialSend('\n');
                         syscallReturn = SRET_ERROR;
                         break;
                     }
@@ -279,12 +281,12 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
                     break;
                 case 6:
                     ownerPID = processes[schedulerProcessAt].pid;
-                    serialSendString("[SC_GRAPHICS]: Screen ownership set to PID ");
+                    serialSendString("[SC_GRAPHICS, 6]: Screen ownership set to PID ");
                     serialSendInt(ownerPID); serialSend('\n');
                     break;
                 case 7:
                     if(options.ecx > 320 || options.edx > 200) {
-                        serialSendString("[SC_GRAPHICS]: Invalid coordinates\n");
+                        serialSendString("[SC_GRAPHICS, 7]: Invalid coordinates\n");
                         syscallReturn = SRET_ERROR;
                         break;
                     }
@@ -306,6 +308,8 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
             uint8_t *buffer = (uint8_t *)(options.ecx + processes[schedulerProcessAt].memStart);
             fileInfo tInfo;
             FSsetSTI = false;
+            serialSendString("[SC_LOADFILE]: Got path \""); serialSendString(filePath);
+            serialSendString("\"\n");
             if(fsReadFile(filePath, buffer, &tInfo) == -1) {
                 serialSendString("[SC_LOADFILE]: Failed to load file\n");
                 syscallReturn = SRET_ERROR;

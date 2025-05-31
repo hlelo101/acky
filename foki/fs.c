@@ -70,6 +70,7 @@ int iso9660Read(const char *path, int idx, uint8_t *outputBuffer, fileInfo *info
     iso9660GetFileInfo(path, idx, info);
 
     if(info->size < 2048) info->size = 2048;
+    serialSendString("Reading "); serialSendInt(info->size); serialSendString(" bytes\n");
     // Read the file
     commonRead(drives[idx].loc, info->lbaLoc, (info->size + 2047) / 2048, outputBuffer);
 
@@ -92,7 +93,7 @@ int iso9660GetFileInfo(const char *path, int idx, fileInfo *info) {
     commonRead(drives[idx].loc, 16, 1, buffer);
     // Root directory entry offset is 156
     uint32_t lastFolderLoc = buffer[156 + 2] | (buffer[156 + 3] << 8) | (buffer[156 + 4] << 16) | (buffer[156 + 5] << 24);
-    uint8_t fileSize = 0;
+    uint32_t fileSize = 0;
     bool lastDirIsFile = false;
     // Go through each directories
     int lastSlashOffset = 3;
@@ -115,7 +116,7 @@ int iso9660GetFileInfo(const char *path, int idx, fileInfo *info) {
             // Check the name
             uint8_t dirEntryLength = buffer[entryOffset];
             uint8_t nameLength = buffer[entryOffset + 32];
-            fileSize = buffer[entryOffset + 26];
+            memcpy(&fileSize, &buffer[entryOffset + 10], sizeof(uint32_t));
             char dirName[32] = {0};
             memcpy(dirName, buffer + entryOffset + 33, nameLength);
 
@@ -133,8 +134,11 @@ int iso9660GetFileInfo(const char *path, int idx, fileInfo *info) {
     if(!lastDirIsFile) return -1; // Not found
 
     for(int i = 0; i<32; i++) info->name[i] = folderName[i];
-    info->size = ((fileSize == 0) ? 2048 : fileSize);
+    // info->size = ((fileSize == 0) ? 2048 : fileSize);
+    info->size = 2048*2;
     info->lbaLoc = lastFolderLoc;
+    serialSendString("File size: "); serialSendInt(info->size);
+    serialSend('\n');
 
     return 0;
 }
