@@ -20,12 +20,14 @@ trampoline:
     mov edi, [proc_regs_edi]
     mov ebp, [proc_regs_ebp]
 
-    ; Set DS
+    ; Set the data segments
+    push dx
     mov dx, 0x0F ; 0x0C for ring 3
     mov ds, dx
     mov es, dx
     mov fs, dx
     mov gs, dx
+    pop dx
 
     push dword 0x0F                 ; Set SS
     push dword cs:[proc_regs_esp]   ; Set ESP

@@ -1,3 +1,4 @@
+// That shell could be named Kish...
 #include <acky.h>
 #include <stdbool.h>
 
