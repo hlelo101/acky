@@ -9,7 +9,7 @@ Its kernel (named Foki) supports:
 - Simple drivers
 > This includes drivers for the following devices (mostly standard x86 stuff):
 > - ATA drive
-> - VGA Text mode
+> - VGA
 > - PS2 Keyboard
 > - PIT
 > - Serial output
@@ -32,6 +32,9 @@ To do so, simply enter the name or full path of the application you want to run.
 For example, to run test2.bin, you can enter `TEST2.AEF` or `A:/PROGDAT/TEST2.AEF`.
 
 It is planned to make a more complex shell in the future.
+# The GUI
+Right now, the GUI is very experimental and buggy. You might see things like artifacts.\
+You can move the mouse around and click on some buttons.
 # The AEF file format
 AEF stands for **A**cky **E**xecutable **F**ile.\
 It's simply a custom header for applications on Acky.\
