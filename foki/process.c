@@ -24,7 +24,7 @@ int createProcessEntry(const char *name, uint32_t fileSize) {
     processes[processCount].pid = tick + processCount;
     serialSendString("[createProcessEntry()]: New process \""); serialSendString(name);
     serialSendString("\", memory allocated at: "); serialSendInt(processes[processCount].memStart); 
-    serialSendString(" PID: "); serialSendInt(processes[processCount].pid); serialSendString(", size: ");
+    serialSendString(", PID: "); serialSendInt(processes[processCount].pid); serialSendString(", size: ");
     serialSendInt(fileSizeWithStack); serialSend('\n');
     processes[processCount].memSize = fileSizeWithStack;
     processCount++;

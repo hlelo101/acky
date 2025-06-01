@@ -55,7 +55,7 @@ mkiso:
 
 	@echo "Hai! Test" > iso/test.txt
 	@mkdir iso/progdat/wm/
-	@cp user/apps/WM\ Media/* iso/progdat/wm/
+	@cp user/apps/wm/media/* iso/progdat/wm/
 	@grub-mkrescue -o acky.iso iso
 
 userspace:
@@ -90,7 +90,7 @@ userspace:
 	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"Terminal Write\"" user/apps.c user/apps/twrite.c -o ct/twrite.elf
 	@$(OBJCOPY) $(OFLAGS) ct/twrite.elf ct/twrite.aef
 
-	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"Window Manager\"" user/apps.c user/apps/wm.c -o ct/wm.elf
+	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"Window Manager\"" user/apps.c user/apps/wm/wm.c user/apps/wm/img.c -o ct/wm.elf
 	@$(OBJCOPY) $(OFLAGS) ct/wm.elf ct/wm.aef
 
 clean:

@@ -268,9 +268,9 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
                     break;
                 case 4:
                     if(options.ecx > 320 || options.edx > 200) {
-                        serialSendString("[SC_GRAPHICS, 4]: Invalid coordinates, got: ");
-                        serialSendInt(options.ecx); serialSendString(", "); serialSendInt(options.edx);
-                        serialSend('\n');
+                        // serialSendString("[SC_GRAPHICS, 4]: Invalid coordinates, got: ");
+                        // serialSendInt(options.ecx); serialSendString(", "); serialSendInt(options.edx);
+                        // serialSend('\n');
                         syscallReturn = SRET_ERROR;
                         break;
                     }
@@ -286,7 +286,7 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
                     break;
                 case 7:
                     if(options.ecx > 320 || options.edx > 200) {
-                        serialSendString("[SC_GRAPHICS, 7]: Invalid coordinates\n");
+                        // serialSendString("[SC_GRAPHICS, 7]: Invalid coordinates\n");
                         syscallReturn = SRET_ERROR;
                         break;
                     }

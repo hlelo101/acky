@@ -70,8 +70,7 @@ int iso9660Read(const char *path, int idx, uint8_t *outputBuffer, fileInfo *info
     iso9660GetFileInfo(path, idx, info);
 
     if(info->size < 2048) info->size = 2048;
-    serialSendString("Reading "); serialSendInt(info->size); serialSendString(" bytes\n");
-    // Read the file
+   // Read the file
     commonRead(drives[idx].loc, info->lbaLoc, (info->size + 2047) / 2048, outputBuffer);
 
     return 0;
@@ -137,8 +136,6 @@ int iso9660GetFileInfo(const char *path, int idx, fileInfo *info) {
     // info->size = ((fileSize == 0) ? 2048 : fileSize);
     info->size = 2048*2;
     info->lbaLoc = lastFolderLoc;
-    serialSendString("File size: "); serialSendInt(info->size);
-    serialSend('\n');
 
     return 0;
 }
