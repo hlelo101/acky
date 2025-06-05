@@ -53,6 +53,8 @@ enum syscalls {
     SC_GETFILEINFO
 };
 
+extern bool setSti;
+
 void initIDT();
 void PICMap(int masterOffset, int slaveOffset, uint8_t masterMasks, uint8_t slaveMasks);
 void setIDTGate(int index, uint32_t address, uint16_t selector, uint8_t flags);

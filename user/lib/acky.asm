@@ -14,16 +14,14 @@ global reboot
 global popMsg
 global sendMsg
 global changeLayout
-global enable13hMode
-global setPrimaryCoordinates
-global setSecondaryCoordinates
-global setColor
-global putPixel
-global drawLine
 global loadFile
 global getFileInfo
 global getScreenOwnership
+global _drawLine
 global getPixel
+global enableGraphicsMode
+global _putPixel
+global _drawSquare
 
 section .ackylib
 print:
@@ -186,44 +184,22 @@ changeLayout:
     pop ebx
     ret
 
-setPrimaryCoordinates:
+getScreenOwnership:
     push ebx
-    push ecx
-    push edx
-
-    mov eax, 13
-    mov ebx, 1
-    mov ecx, [esp + 16]
-    mov edx, [esp + 20]
-    int 0x40
-
-    pop edx
-    pop ecx
-    pop ebx
-    ret
-
-setSecondaryCoordinates:
-    push ebx
-    push ecx
-    push edx
-
-    mov eax, 13
-    mov ebx, 2
-    mov ecx, [esp + 16]
-    mov edx, [esp + 20]
-    int 0x40
-
-    pop edx
-    pop ecx
-    pop ebx
-    ret
-
-setColor:
-    push ebx
-    push ecx
 
     mov eax, 13
     mov ebx, 3
+    int 0x40
+
+    pop ebx
+    ret
+
+_drawLine:
+    push ebx
+    push ecx
+
+    mov eax, 13
+    mov ebx, 2
     mov ecx, [esp + 12]
     int 0x40
 
@@ -231,63 +207,51 @@ setColor:
     pop ebx
     ret
 
-putPixel:
+_putPixel:
     push ebx
     push ecx
-    push edx
 
     mov eax, 13
-    mov ebx, 4
-    mov ecx, [esp + 16]
-    mov edx, [esp + 20]
+    mov ebx, 1 
+    mov ecx, [esp + 12]
     int 0x40
 
-    pop edx
     pop ecx
-    pop ebx
-    
-drawLine:
-    push ebx
-
-    mov eax, 13
-    mov ebx, 5
-    int 0x40
-
-    pop ebx
-    ret
-
-enable13hMode:
-    push ebx
-
-    mov eax, 13
-    mov ebx, 0
-    int 0x40
-
-    pop ebx
-    ret
-
-getScreenOwnership:
-    push ebx
-
-    mov eax, 13
-    mov ebx, 6
-    int 0x40
-
     pop ebx
     ret
 
 getPixel:
     push ebx
     push ecx
-    push edx
 
     mov eax, 13
-    mov ebx, 7
-    mov ecx, [esp + 16] ; X
-    mov edx, [esp + 20] ; Y
+    mov ebx, 4 
+    mov ecx, [esp + 12]
     int 0x40
 
-    pop edx
+    pop ecx
+    pop ebx
+    ret
+
+enableGraphicsMode:
+    push ebx
+
+    mov eax, 13
+    xor ebx, ebx
+    int 0x40
+
+    pop ebx
+    ret
+
+_drawSquare:
+    push ebx
+    push ecx
+
+    mov eax, 13
+    mov ebx, 5
+    mov ecx, [esp + 12]
+    int 0x40
+
     pop ecx
     pop ebx
     ret

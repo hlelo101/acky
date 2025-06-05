@@ -14,6 +14,7 @@
 
 gate idt[256];
 idtrDesc idtr;
+bool runSti = true;
 
 void PICMap(int masterOffset, int slaveOffset, uint8_t masterMasks, uint8_t slaveMasks) {
     // ICW1
@@ -235,68 +236,53 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
             break;
         case SC_GRAPHICS:
             // EBX:
-            // 0: Set 13h mode; 1: Set primary X Y; 2: Set secondary X Y; 3: Set color; 4: Put a pixel; 5: Draw a line; 6: Get screen ownership; 7: Get pixel
+            // 0: Enable graphics mode; 1: Put pixel; 2: Draw line; 3: Get screen ownership; 4: Get pixel; 5: Draw square
+            // ECX: Contains the address of the related struct
             switch(options.ebx) {
                 case 0:
-                    init13h();
+                    runSti = false;
+                    enableGraphics();
                     break;
                 case 1:
-                    if(options.ecx > 320 || options.edx > 200) {
-                        serialSendString("[SC_GRAPHICS, 1]: Invalid coordinates\n");
+                    if(options.ecx >= (uint32_t)processes[schedulerProcessAt].memSize) {
                         syscallReturn = SRET_ERROR;
                         break;
                     }
-                    pX = options.ecx;
-                    pY = options.edx;
+                    pixelInfo *pixel = (pixelInfo *)(options.ecx + processes[schedulerProcessAt].memStart);
+                    putPixel(pixel->x, pixel->y, pixel->r, pixel->g, pixel->b);
                     break;
                 case 2:
-                    if(options.ecx > 320 || options.edx > 200) {
-                        serialSendString("[SC_GRAPHICS, 2]: Invalid coordinates\n");
+                    if(options.ecx >= (uint32_t)processes[schedulerProcessAt].memSize) {
                         syscallReturn = SRET_ERROR;
                         break;
                     }
-                    sX = options.ecx;
-                    sY = options.edx;
+                    lineInfo *info = (lineInfo *)(options.ecx + processes[schedulerProcessAt].memStart);
+                    drawLine(info->firstPoint.x, info->firstPoint.y, info->x, info->y, info->firstPoint.r, info->firstPoint.g, info->firstPoint.b);
                     break;
                 case 3:
-                    if(options.ecx > 15) {
-                        serialSendString("[SC_GRAPHICS, 3]: Invalid color\n");
-                        syscallReturn = SRET_ERROR;
-                        break;
-                    }
-                    color = (uint8_t)options.ecx;
+                    ownerPID = processes[schedulerProcessAt].pid;
                     break;
                 case 4:
-                    if(options.ecx > 320 || options.edx > 200) {
-                        // serialSendString("[SC_GRAPHICS, 4]: Invalid coordinates, got: ");
-                        // serialSendInt(options.ecx); serialSendString(", "); serialSendInt(options.edx);
-                        // serialSend('\n');
+                    if(options.ecx >= (uint32_t)processes[schedulerProcessAt].memSize) {
                         syscallReturn = SRET_ERROR;
                         break;
                     }
-                    PUT_PIXEL(options.ecx, options.edx, color);
+                    pixelInfo *pixel2 = (pixelInfo *)(options.ecx + processes[schedulerProcessAt].memStart);
+                    getPixel(pixel2->x, pixel2->y, pixel2);
                     break;
                 case 5:
-                    drawLine(pX, pY, sX, sY, color);
-                    break;
-                case 6:
-                    ownerPID = processes[schedulerProcessAt].pid;
-                    serialSendString("[SC_GRAPHICS, 6]: Screen ownership set to PID ");
-                    serialSendInt(ownerPID); serialSend('\n');
-                    break;
-                case 7:
-                    if(options.ecx > 320 || options.edx > 200) {
-                        // serialSendString("[SC_GRAPHICS, 7]: Invalid coordinates\n");
+                    if(options.ecx >= (uint32_t)processes[schedulerProcessAt].memSize) {
                         syscallReturn = SRET_ERROR;
                         break;
                     }
-                    syscallReturn = GET_PIXEL(options.ecx, options.edx);
+                    lineInfo *square = (lineInfo *)(options.ecx + processes[schedulerProcessAt].memStart);
+                    for(int i = 0; i < square->y; i++) {
+                        for(int j = 0; j < square->x; j++) {
+                            putPixel(square->firstPoint.x + j, square->firstPoint.y + i, square->firstPoint.r, square->firstPoint.g, square->firstPoint.b);
+                        }
+                    }
                     break;
-                default:
-                    serialSendString("[SC_GRAPHICS]: Invalid option\n");
-                    syscallReturn = SRET_ERROR;
-                    break;
-            }
+            } 
             break;
         case SC_LOADFILE: // Load file; EBX = Path, ECX = Buffer address
             if(options.ebx > (uint32_t)processes[schedulerProcessAt].memSize || options.ecx > (uint32_t)processes[schedulerProcessAt].memSize) {
@@ -396,5 +382,6 @@ void initIDT() {
 
     // Enable some IRQs and initialize the PIC
     PICMap(0x20, 0x28, 0xF8, 0xEF);
-    asm volatile("sti");
+    if(runSti) asm volatile("sti");
+    else runSti = true;
 }

@@ -1,13 +1,14 @@
-CC = ~/opt/cross/bin/i386-elf-gcc
+CC = ~/opt/cross/bin/i386-elf-gcc 
 OBJCOPY = ~/opt/cross/bin/i386-elf-objcopy
 OFLAGS = -O binary
 CFLAGS = -ffreestanding -O2 -Wall -Wextra -nostdlib -fno-strict-aliasing -mno-80387 -lgcc -c
-USERCFLAGS = -Wl,--no-warn-rwx-segments -ffreestanding -nostdlib -lgcc -I user/lib -fomit-frame-pointer -T user/apps.ld ct/ackylib.o
-LDFLAGS = -T linker.ld -o acky.bin -ffreestanding -O2 -nostdlib -lgcc
+USERCFLAGS = -Wl,--no-warn-rwx-segments -ffreestanding -nostdlib -lgcc -I user/lib -fomit-frame-pointer -T user/apps.ld ct/ackylib.o ct/ackylibc.o
+
+LDFLAGS = -T linker.ld -o foki.bin -ffreestanding -O2 -nostdlib -lgcc
 AS = nasm
 ASFLAGS = -f bin
 OBJS =	ct/boot.o ct/kmain.o ct/vga.o ct/io.o ct/memory.o ct/gdt.o ct/idt.o ct/ps2kbd.o ct/herr.o ct/pit.o ct/ata.o\
-		ct/serial.o ct/fs.o ct/process.o ct/pitasm.o ct/faultHandlers.o ct/acpi.o ct/ps2mouse.o
+		ct/serial.o ct/fs.o ct/process.o ct/pitasm.o ct/faultHandlers.o ct/acpi.o ct/ps2mouse.o 
 
 # Enabling KVM improves the accuracy of the emulation
 QEMUCMD = qemu-system-i386 -enable-kvm -drive file=acky.iso,format=raw,media=disk -m 124 -serial stdio -display gtk,zoom-to-fit=on -cpu host
@@ -17,6 +18,8 @@ all: build userspace mkiso clean
 build:
 	@echo "Building kernel..."
 	@mkdir ct
+
+	@$(AS) -f bin foki/krme.asm -o ct/krme.kfe
 
 	@$(AS) -felf32 multiboot.asm -o ct/boot.o
 	@$(AS) -felf32 foki/pit.asm -o ct/pitasm.o
@@ -39,18 +42,19 @@ build:
 	@$(CC) $(CFLAGS) foki/ps2mouse.c -o ct/ps2mouse.o
 
 	@$(CC) $(LDFLAGS) $(OBJS)
-	@stat acky.bin
+	@stat foki.bin
 
 mkiso:
 	@echo "Building ISO..."
 	@mkdir -p iso/boot/grub/
 	@cp grub.cfg iso/boot/grub/grub.cfg
 
-	@mkdir iso/ackydat
-	@cp acky.bin iso/ackydat/
+	@mkdir iso/ackydat/
+	@cp foki.bin iso/ackydat/
 	@cp ct/*.asa iso/ackydat/
+	@cp ct/krme.kfe iso/ackydat/
 
-	@mkdir iso/progdat
+	@mkdir iso/progdat/
 	@cp ct/*.aef iso/progdat/
 
 	@echo "Hai! Test" > iso/test.txt
@@ -61,6 +65,7 @@ mkiso:
 userspace:
 	@echo "Building userspace..."
 	@$(AS) -f elf32 user/lib/acky.asm -o ct/ackylib.o
+	@$(CC) -Wl,--no-warn-rwx-segments -ffreestanding -nostdlib -lgcc -I user/lib -fomit-frame-pointer -T user/apps.ld -c user/lib/acky.c -o ct/ackylibc.o
 
 	@$(AS) $(ASFLAGS) user/system/kproc.asm -o ct/kproc.asa
 	@$(AS) $(ASFLAGS) user/system/init.asm -o ct/init.asa
@@ -92,11 +97,12 @@ userspace:
 
 	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"Window Manager\"" user/apps.c user/apps/wm/wm.c user/apps/wm/img.c -o ct/wm.elf
 	@$(OBJCOPY) $(OFLAGS) ct/wm.elf ct/wm.aef
+	@$(AS) $(ASFLAGS) user/apps/wm/media/font.asm -o user/apps/wm/media/font.pbf
 
 clean:
 	@echo "Cleaning up..."
 	@rm -r ct/
-	@rm acky.bin
+	@rm foki.bin
 	@rm -r iso/
 
 run:

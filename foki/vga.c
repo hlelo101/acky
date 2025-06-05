@@ -1,8 +1,14 @@
 #include "vga.h"
 #include "memory.h"
 #include "io.h"
+#include "gdt.h"
+#include "idt.h"
+#include "kmain.h"
+#include "serial.h"
 
+vbeReturn VBEInfo;
 uint32_t ownerPID = 0;
+uint8_t currentGMode = VGA_MODE_TEXT;
 
 /*
 *   TEXT MODE
@@ -119,100 +125,9 @@ void enableCursor(uint8_t cursor_start, uint8_t cursor_end) {
 
 /*
 *   GRAPHICS MODE
+*   04/06/2025: I gave up on VGA, VBE is much simpler to use, less messy and
+*   more capable.
 */
-
-void ioDelay() {
-    for(int i = 0; i < 1000; i++);
-}
-
-void writeReg(const int reg, const int index, const int value) {
-    if(reg == REG_ATTRIBUTE) {
-        inb(REG_ATTRIBUTE_RESET);
-        outb(REG_ATTRIBUTE, index);
-        outb(REG_ATTRIBUTE, value);
-        ioDelay();
-        return;
-    }
-    if (reg == REG_MISC) {
-        outb(REG_MISC, value);
-        ioDelay();
-        return;
-    }
-    outb(reg, index);
-    outb(DATA(reg), value);
-    ioDelay();
-}
-
-uint8_t readReg(const int reg, const int index) {
-    if (reg == REG_ATTRIBUTE) { // Reading that thing is a mess...
-        inb(REG_ATTRIBUTE_RESET);
-        ioDelay();
-        outb(REG_ATTRIBUTE, index);
-        ioDelay();
-        uint8_t value = inb(DATA(REG_ATTRIBUTE));
-        ioDelay();
-        inb(REG_ATTRIBUTE_RESET);
-        ioDelay();
-        return value;
-    }
-    if (reg == REG_MISC) {
-        return inb(0x3CC);
-    }
-    outb(reg, index);
-    ioDelay();
-    return inb(DATA(reg));
-}
-
-// That gives us a wonderful 320x200 resolution with 256 colors
-void init13h() {
-    writeReg(REG_CRTC, 0x11, readReg(REG_CRTC, 0x11) & 0x7F);
-
-    writeReg(REG_MISC, 0x00, 0x63); // Set some default values
-    // Sequencer
-    writeReg(REG_SEQUENCER, 0x00, 0x03);
-    writeReg(REG_SEQUENCER, 0x01, 0x01);
-    writeReg(REG_SEQUENCER, 0x02, 0x0F);
-    writeReg(REG_SEQUENCER, 0x03, 0x00);
-    writeReg(REG_SEQUENCER, 0x04, 0x0E);
-
-    // CRTC
-    uint8_t crtcRegs[] = {
-        0x5F, 0x4F, 0x50, 0x82, 0x54, 0x80, 0xBF, 0x1F,
-        0x00, 0x41, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x9C, 0x0E, 0x8F, 0x28, 0x40, 0x96, 0xB9, 0xA3,
-        0xFF
-    };
-    for(int i = 0; i < (int)sizeof(crtcRegs); i++) {
-        writeReg(REG_CRTC, i, crtcRegs[i]);
-    }
-    // Graphics
-    uint8_t graphicsRegs[] = {
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0X05, 0x0F,
-        0xFF
-    };
-    for(int i = 0; i < (int)sizeof(graphicsRegs); i++) {
-        writeReg(REG_GRAPHICS, i, graphicsRegs[i]);
-    }
-    // Attribute
-    inb(REG_ATTRIBUTE_RESET);
-    for(int i = 0; i <= 0x0F; i++) {
-        writeReg(REG_ATTRIBUTE, i, i);
-    }
-    writeReg(REG_ATTRIBUTE, 0x10, 0x41);
-    writeReg(REG_ATTRIBUTE, 0x11, 0x00);
-    writeReg(REG_ATTRIBUTE, 0x12, 0x0F);
-    writeReg(REG_ATTRIBUTE, 0x13, 0x00);
-    writeReg(REG_ATTRIBUTE, 0x14, 0x00);
-
-    // Enable video
-    writeReg(REG_ATTRIBUTE, 0x20, 0);
-
-    // Default screen
-    uint8_t *vgaMem = (uint8_t*)0xA0000;
-    for(int i = 0; i < 320 * 200 / 15; i++) {
-        for(int i = 0; i <= 15; i++) *vgaMem++ = i;
-    }
-}
 
 // Wow maths
 int abs(int x) {
@@ -220,16 +135,51 @@ int abs(int x) {
 }
 
 // Bresenham's Line Algorithm
-void drawLine(int x0, int y0, int x1, int y1, uint8_t color) {
+void drawLine(int x0, int y0, int x1, int y1, uint8_t r, uint8_t g, uint8_t b) {
   int dx =  abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
   int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1; 
   int err = dx + dy, e2;
  
   for(;;) {
-    PUT_PIXEL(x0, y0, color);
+    putPixel(x0, y0, r, g, b);
     if(x0 == x1 && y0 == y1) break;
     e2 = 2 * err;
     if(e2 >= dy) { err += dy; x0 += sx; }
     if(e2 <= dx) { err += dx; y0 += sy; }
   }
+}
+
+void putPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
+    uint32_t offset = y * VBEInfo.pitch + (x * (VBEInfo.bpp / 8));
+    uint8_t *pixel = (uint8_t*)(VBEInfo.framebuffer + offset);
+    pixel[2] = b;
+    pixel[1] = g;
+    pixel[0] = r;
+}
+
+void getPixel(int x, int y, pixelInfo *info) {
+    uint32_t offset = y * VBEInfo.pitch + (x * (VBEInfo.bpp / 8));
+    uint8_t *pixel = (uint8_t*)(VBEInfo.framebuffer + offset);
+
+    info->x = x;
+    info->y = y;
+    info->r = pixel[0];
+    info->g = pixel[1];
+    info->b = pixel[2];
+}
+
+void enableGraphics() {
+    vbeReturn *returnVal = (vbeReturn *)callKFEFunction(0, VBELoadAddr);
+    memcpy(&VBEInfo, returnVal, sizeof(vbeReturn));
+    initGDT(); // Leaves the system in a half pmode state, so gotta redo these...
+    initIDT();
+
+    for (int y = 0; y < SCREEN_HEIGHT; ++y) {
+        for (int x = 0; x < SCREEN_WIDTH; ++x) {
+            uint8_t r = (x * 255) / SCREEN_WIDTH;
+            uint8_t g = (y * 255) / SCREEN_HEIGHT;
+            uint8_t b = ((x ^ y) * 255) / (SCREEN_WIDTH > SCREEN_HEIGHT ? SCREEN_WIDTH : SCREEN_HEIGHT);
+            putPixel(x, y, r, g, b);
+        }
+    }
 }

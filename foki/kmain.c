@@ -12,15 +12,37 @@
 #include "gdt.h"
 #include "acpi.h"
 #include "ps2mouse.h"
+#include "kmain.h"
 
 bool canPreempt = false;
 bool systemInitialized = false;
+uint16_t VBELoadAddr = 0;
 
 unsigned int systemMemoryB = 0;
 extern void initGDT();
 
 unsigned int getSystemMemory() {
     return systemMemoryB;
+}
+
+uint32_t loadKFE(const char *path) {
+    fileInfo info;
+    fsGetFileInfo(path, &info);
+    uint8_t buffer[info.size];
+    fsReadFile(path, buffer, &info);
+    kfeHeader *header = (kfeHeader *)buffer;
+    if(memcmp(header->signature, "KFE1", 4) != 0) return 0;
+    memcpy((void *)(uintptr_t)header->loadAddr, buffer, info.size);
+
+    return header->loadAddr;
+}
+
+uint32_t callKFEFunction(uint8_t index, uint32_t loadAddr) {
+    kfeHeader *header = (kfeHeader *)loadAddr;
+    if(index >= header->numFuncs) return 0;
+    
+    func_t f = (func_t)(uintptr_t)header->funcsAddr[index];
+    return f();
 }
 
 void kmain(multiboot_info_t* mbd, uint32_t magic) {
@@ -46,7 +68,12 @@ void kmain(multiboot_info_t* mbd, uint32_t magic) {
     initFS();
     initMem();
     initPS2Mouse();
+    VBELoadAddr = loadKFE("A:/ACKYDAT/KRME.KFE");
     
+    serialSendString("addr = "); serialSendInt(VBEInfo.framebuffer); serialSend('\n');
+    serialSendString("pitch = "); serialSendInt(VBEInfo.pitch); serialSend('\n');
+    serialSendString("bpp = "); serialSendInt(VBEInfo.bpp); serialSend('\n');
+
     spawnProcess("A:/ACKYDAT/KPROC.ASA");
     spawnProcess("A:/ACKYDAT/INIT.ASA");
     

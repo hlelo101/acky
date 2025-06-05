@@ -1,10 +1,12 @@
 #include <acky.h>
 #include "img.h"
 
-#define CLEAR() for(int i = 0; i < 320 * 200; i++) { putPixel(i % 320, i / 320); }
+#define CLEAR() drawSquare(0, 0, 1024, 768, 18, 92, 182);
 #define WM_BG_COLOR 3
 
-uint8_t imageData[2500], mouseData[2048], mouseBG[4 * 4] = {WM_BG_COLOR};
+uint8_t imageData[9000], mouseData[2048];
+pixelInfo mouseBG[12 * 19];
+
 int mouseX = 50, mouseY = 50;
 
 // Some utilities because we still don't have a stdlib
@@ -59,35 +61,52 @@ void checkPower() {
 
 void main() {
     getScreenOwnership(); // Used to indicate to the kernel where to redirect mouse events, etc
-    enable13hMode();
 
-    setColor(WM_BG_COLOR);
+    enableGraphicsMode();
     CLEAR();
 
+    drawSquare(0, 0, 1024, 25, 13, 57, 110);
+
     // Background
-    setColor(1);
     if(loadFile("A:/PROGDAT/WM/BACK.BMP", imageData) == SRET_ERROR) {
         serialPrint("An error occurred while loading \"A:/PROGDAT/WM/BACK.BMP\"");
         while(1);
     }
+    parseBMP(imageData, 744, 680, 30, 30, 30);
 
     // Power
-    parseBMP(imageData, 60, 150);
     if(loadFile("A:/PROGDAT/WM/POWER.BMP", imageData) == SRET_ERROR) {
         serialPrint("An error occurred while loading \"A:/PROGDAT/WM/POWER.BMP\"");
         while(1);
     }
-    setColor(4);
-    parseBMP(imageData, 3, 3);
-    drawBorder(1, 1, 18, 23, 6);
+    drawSquare(0, 0, 22, 25, 189, 2, 2);
+    parseBMP(imageData, 3, 3, 255, 255, 255);
     
+    // Character tests
+    loadFile("A:/PROGDAT/WM/FONT.PBF", imageData);
+    const int charIdx = 1;
+    drawChar(imageData, 30, 30, 30, 0, 0, 0);
+    drawChar(imageData, '!', 38, 30, 0, 0, 0);
+    drawChar(imageData, 32, 46, 30, 0, 0, 0);
+    drawChar(imageData, 33, 54, 30, 0, 0, 0);
+    drawChar(imageData, 34, 62, 30, 0, 0, 0);
+    drawChar(imageData, 35, 70, 30, 0, 0, 0);
+    drawChar(imageData, 36, 78, 30, 0, 0, 0);
+
     // Mouse
-    setColor(0);
-    if(loadFile("A:/PROGDAT/WM/MOUSE2.BMP", mouseData) == SRET_ERROR) { // A:/PROGDAT/WM/MOUSESMA.BMP
-        serialPrint("An error occurred while loading \"A:/PROGDAT/MOUSE2.BMP\"");
+    if(loadFile("A:/PROGDAT/WM/MOUSE.BMP", mouseData) == SRET_ERROR) { // A:/PROGDAT/WM/MOUSESMA.BMP
+        serialPrint("An error occurred while loading \"A:/PROGDAT/MOUSE.BMP\"");
         while(1);
     }
-    parseBMP(mouseData, mouseX, mouseY);
+    // Save the initial background
+    for(int i = 0; i < 19; i++) {
+        for(int j = 0; j < 12; j++) {
+            mouseBG[i * 19 + j].x = mouseX + j;
+            mouseBG[i * 19 + j].y = mouseY + i;
+            getPixel(&mouseBG[i * 19 + j]);
+        }
+    }
+    parseBMP(mouseData, mouseX, mouseY, 0, 0, 0);
 
     procMsg msg;
     mouseMovMsg *mouseMsg;
@@ -96,40 +115,38 @@ void main() {
             mouseMsg = (mouseMovMsg *)msg.msg;
             if(strcmp(mouseMsg->signature, "MOUMOV") == 0) {
                 // Draw the mouse background
-                for(int i = 0; i < 4; i++) {
-                    for(int j = 0; j < 4; j++) {
-                        setColor(mouseBG[i * 4 + j]);
-                        putPixel(mouseX + j, mouseY + i);
+                for(int i = 0; i < 19; i++) {
+                    for(int j = 0; j < 12; j++) {
+                        putPixel(mouseX + j, mouseY + i, mouseBG[i * 19 + j].r, mouseBG[i * 19 + j].g, mouseBG[i * 19 + j].b);
                     }
                 }
                 mouseX += mouseMsg->x;
                 mouseY -= mouseMsg->y;
                 if(mouseX < 0) mouseX = 0;
                 if(mouseY < 0) mouseY = 0;
-                if(mouseX > 320 - 1) mouseX = 320 - 1;
-                if(mouseY > 200 - 1) mouseY = 200 - 1;
+                if(mouseX > 1024 - 1) mouseX = 1024 - 1;
+                if(mouseY > 768 - 1) mouseY = 768 - 1;
 
                 // Save the background
-                for(int i = 0; i < 4; i++) {
-                    for(int j = 0; j < 4; j++) {
-                        mouseBG[i * 4 + j] = getPixel(mouseX + j, mouseY + i);
+                for(int i = 0; i < 19; i++) {
+                    for(int j = 0; j < 12; j++) {
+                        mouseBG[i * 19 + j].x = mouseX + j;
+                        mouseBG[i * 19 + j].y = mouseY + i;
+                        getPixel(&mouseBG[i * 19 + j]);
                     }
                 }
 
-                uint8_t color = 0;
+                uint8_t r = 0, g = 0;
                 if(mouseMsg->status & 0x01) {
-                    color = 15;
+                    r = 255;
                     checkPower();
                 }
 
-                if(mouseMsg->status & 0x02) color = 14; 
+                if(mouseMsg->status & 0x02) g = 255; 
                 
                 // Draw the mouse
-                setColor(color);
-                parseBMP(mouseData, mouseX, mouseY);
-            } else {
-                serialPrint("Unknown message received\n");
-            }
+                parseBMP(mouseData, mouseX, mouseY, r, g, 0);
+            } else serialPrint("Unknown message received\n");
         }
     }
 }

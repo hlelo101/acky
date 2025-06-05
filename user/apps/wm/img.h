@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <acky.h>
+#include <stddef.h>
 
 typedef struct {
     char signature[2]; // "BM'
@@ -24,6 +25,14 @@ typedef struct {
     uint32_t colorsImportant; // 0 = all
 } __attribute__((packed)) BMPInfoHeader;
 
-void parseBMP(const uint8_t* data, int x, int y);
-void drawRectangle(int x, int y, int width, int height, uint8_t color);
-void drawBorder(int x, int y, int width, int height, uint8_t color);
+typedef struct {
+    char signature[3];  // 'PBF'
+    uint8_t width;      // Width in bits
+    uint8_t height;     // Height in bits
+    uint8_t nbEntries;  // Number of characters (entries)
+} __attribute__((packed)) PBFHeader;
+
+void parseBMP(const uint8_t* data, int x, int y, uint8_t r, uint8_t g, uint8_t b);
+void drawRectangle(int x, int y, int width, int height, uint8_t r, uint8_t g, uint8_t b);
+void drawBorder(int x, int y, int width, int height, uint8_t r, uint8_t g, uint8_t b);
+void drawChar(uint8_t *PBFData, uint8_t index, int x, int y, uint8_t r, uint8_t g, uint8_t b);
