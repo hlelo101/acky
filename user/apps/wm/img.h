@@ -36,3 +36,4 @@ void parseBMP(const uint8_t* data, int x, int y, uint8_t r, uint8_t g, uint8_t b
 void drawRectangle(int x, int y, int width, int height, uint8_t r, uint8_t g, uint8_t b);
 void drawBorder(int x, int y, int width, int height, uint8_t r, uint8_t g, uint8_t b);
 void drawChar(uint8_t *PBFData, uint8_t index, int x, int y, uint8_t r, uint8_t g, uint8_t b);
+void renderStr(const char *str, uint8_t *fontData, int x, int y, uint8_t r, uint8_t g, uint8_t b);

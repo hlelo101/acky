@@ -75,7 +75,7 @@ void setProcessPC(int idx, uint32_t pc) {
 uint32_t spawnProcess(const char *path) {
     fileInfo info;
     if(fsGetFileInfo(path, &info) == -1) return 0; // File not found
-    uint8_t processBuffer[info.size < 2048 ? 2048 : info.size];
+    uint8_t processBuffer[info.size]; 
 
     fsReadFile(path, processBuffer, &info);
     if(processBuffer[36] != 'A' && processBuffer[37] != 'E' && processBuffer[38] != 'F') {

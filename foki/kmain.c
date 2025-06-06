@@ -69,10 +69,6 @@ void kmain(multiboot_info_t* mbd, uint32_t magic) {
     initMem();
     initPS2Mouse();
     VBELoadAddr = loadKFE("A:/ACKYDAT/KRME.KFE");
-    
-    serialSendString("addr = "); serialSendInt(VBEInfo.framebuffer); serialSend('\n');
-    serialSendString("pitch = "); serialSendInt(VBEInfo.pitch); serialSend('\n');
-    serialSendString("bpp = "); serialSendInt(VBEInfo.bpp); serialSend('\n');
 
     spawnProcess("A:/ACKYDAT/KPROC.ASA");
     spawnProcess("A:/ACKYDAT/INIT.ASA");

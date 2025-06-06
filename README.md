@@ -9,7 +9,7 @@ Its kernel (named Foki) supports:
 - Simple drivers
 > This includes drivers for the following devices (mostly standard x86 stuff):
 > - ATA drive
-> - VGA
+> - VBE
 > - PS2 Keyboard
 > - PIT
 > - Serial output

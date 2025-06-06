@@ -72,3 +72,11 @@ void drawChar(uint8_t *PBFData, uint8_t index, int x, int y, uint8_t r, uint8_t 
         }
     }
 }
+
+void renderStr(const char *str, uint8_t *fontData, int x, int y, uint8_t r, uint8_t g, uint8_t b) {
+    int offset = x;
+    do {
+        drawChar(fontData, *str, offset, y, r, g, b);
+        offset += 8;
+    } while(*str++);
+}

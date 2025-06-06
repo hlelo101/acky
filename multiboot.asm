@@ -18,7 +18,7 @@ align 4
 section .text
 global _start:function (_start.end - _start)
 _start:
-	mov ebp, 0x4000
+	mov ebp, 0x8000
 	mov esp, ebp
 	push eax
 	push ebx

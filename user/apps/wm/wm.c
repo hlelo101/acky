@@ -84,14 +84,8 @@ void main() {
     
     // Character tests
     loadFile("A:/PROGDAT/WM/FONT.PBF", imageData);
-    const int charIdx = 1;
-    drawChar(imageData, 30, 30, 30, 0, 0, 0);
-    drawChar(imageData, '!', 38, 30, 0, 0, 0);
-    drawChar(imageData, 32, 46, 30, 0, 0, 0);
-    drawChar(imageData, 33, 54, 30, 0, 0, 0);
-    drawChar(imageData, 34, 62, 30, 0, 0, 0);
-    drawChar(imageData, 35, 70, 30, 0, 0, 0);
-    drawChar(imageData, 36, 78, 30, 0, 0, 0);
+    renderStr("Hello, World!", imageData, 50, 30, 0, 0, 0);
+    drawChar(imageData, 2, 60, 50, 33, 204, 155);
 
     // Mouse
     if(loadFile("A:/PROGDAT/WM/MOUSE.BMP", mouseData) == SRET_ERROR) { // A:/PROGDAT/WM/MOUSESMA.BMP

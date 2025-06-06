@@ -95,7 +95,8 @@ userspace:
 	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"Terminal Write\"" user/apps.c user/apps/twrite.c -o ct/twrite.elf
 	@$(OBJCOPY) $(OFLAGS) ct/twrite.elf ct/twrite.aef
 
-	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"Window Manager\"" user/apps.c user/apps/wm/wm.c user/apps/wm/img.c -o ct/wm.elf
+	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"Window Manager\"" user/apps.c user/apps/wm/wm.c user/apps/wm/img.c\
+		user/apps/wm/window.c -o ct/wm.elf
 	@$(OBJCOPY) $(OFLAGS) ct/wm.elf ct/wm.aef
 	@$(AS) $(ASFLAGS) user/apps/wm/media/font.asm -o user/apps/wm/media/font.pbf
 

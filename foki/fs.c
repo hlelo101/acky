@@ -60,7 +60,7 @@ int parsePartitionTable(const uint8_t* buffer, const char letter, const char* na
 
 int getDriveIndexFromLetter(const char c) {
     for(int i = 0; i < driveCount; i++) {
-        if(drives[i].letter == c) return i;
+        if(drives[i].letter== c) return i;
     }
     return -1;
 }
@@ -69,8 +69,7 @@ int getDriveIndexFromLetter(const char c) {
 int iso9660Read(const char *path, int idx, uint8_t *outputBuffer, fileInfo *info) {
     iso9660GetFileInfo(path, idx, info);
 
-    if(info->size < 2048) info->size = 2048;
-   // Read the file
+    // Read the file
     commonRead(drives[idx].loc, info->lbaLoc, (info->size + 2047) / 2048, outputBuffer);
 
     return 0;
@@ -86,6 +85,14 @@ int iso9660GetFileInfo(const char *path, int idx, fileInfo *info) {
     processedPath[pathSize] = ';';
     processedPath[pathSize + 1] = '1';
     processedPath[pathSize + 2] = '\0';
+    // Get the wanted file name
+    char finalFileName[32];
+    for(int i = pathSize; i > 0; i--) {
+        if(path[i] == '/') {
+            strcpy(finalFileName, (char *)(processedPath + i + 1));
+            break;
+        }
+    }
 
     // Read the root folder location
     uint8_t buffer[2048];
@@ -96,10 +103,11 @@ int iso9660GetFileInfo(const char *path, int idx, fileInfo *info) {
     bool lastDirIsFile = false;
     // Go through each directories
     int lastSlashOffset = 3;
-
+    
     // Get the target folder name
     char folderName[32];
     while(processedPath[lastSlashOffset] != '\0') {
+        bool foundFile = false;
         int j = lastSlashOffset;
         while(processedPath[j] != '/' && processedPath[j] != '\0') {
             folderName[j - lastSlashOffset] = processedPath[j];
@@ -111,11 +119,12 @@ int iso9660GetFileInfo(const char *path, int idx, fileInfo *info) {
         // At this point, we have the folder name, try to find it in the last dir by iterating through each entry
         commonRead(drives[idx].loc, lastFolderLoc, 1, buffer);
         int entryOffset = 0;
-        while(buffer[entryOffset] != 0) {
+        do {
+            ISO9660DirEntry *entry = (ISO9660DirEntry *)(buffer + entryOffset);
             // Check the name
-            uint8_t dirEntryLength = buffer[entryOffset];
-            uint8_t nameLength = buffer[entryOffset + 32];
-            memcpy(&fileSize, &buffer[entryOffset + 10], sizeof(uint32_t));
+            uint8_t dirEntryLength = entry->dirRecordLength;
+            uint8_t nameLength = entry->fileNameLength;
+            fileSize = entry->LittleEndianDataSize;
             char dirName[32] = {0};
             memcpy(dirName, buffer + entryOffset + 33, nameLength);
 
@@ -123,18 +132,20 @@ int iso9660GetFileInfo(const char *path, int idx, fileInfo *info) {
             if(dirName[nameLength - 2] == ';' && dirName[nameLength - 1] == '1') lastDirIsFile = true;
             if(strcmp(dirName, folderName) == 0) {
                 // Found the folder, get the location
+                if(strcmp(dirName, finalFileName) == 0) foundFile = true;
                 lastFolderLoc = buffer[entryOffset + 2] | (buffer[entryOffset + 3] << 8) | (buffer[entryOffset + 4] << 16) | (buffer[entryOffset + 5] << 24);
                 break;
             }
 
             entryOffset += dirEntryLength;
-        }
+        } while(buffer[entryOffset] != 0);
+
+        if(foundFile) break;
     }
     if(!lastDirIsFile) return -1; // Not found
 
     for(int i = 0; i<32; i++) info->name[i] = folderName[i];
-    // info->size = ((fileSize == 0) ? 2048 : fileSize);
-    info->size = 2048*2;
+    info->size = BYTES_TO_BLOCK(fileSize);
     info->lbaLoc = lastFolderLoc;
 
     return 0;
