@@ -84,8 +84,8 @@ void initACPI() {
     if(memcmp(rsdt->header.signature, "RSDT", 4) != 0 && memcmp(rsdt->header.signature, "XSDT", 4) != 0) herr("ACPI RSDT/XSDT signature mismatch");
 
     // Find the FADT, since it's really the only thing we care about
-    int numEntris = (rsdt->header.length - sizeof(STDHeader)) / 4;
-    for(int i = 0; i < numEntris; i++) {
+    int numEntries = (rsdt->header.length - sizeof(STDHeader)) / 4;
+    for(int i = 0; i < numEntries; i++) {
         STDHeader *h = (STDHeader *)rsdt->STRp[i];
         if(memcmp(h->signature, "FACP", 4) == 0) {
             fadt = (FADT *)h;

@@ -6,11 +6,13 @@
 [org 0x1000]
 db "KFE1"   ; Kernel function extension signature, version 1
 dw 0x1000   ; Load address
-db 1        ; Number of functions
+db 2        ; Number of functions
 dw chVBEMode
+dw setTextMode
 
 [bits 32]
 chVBEMode:
+    pusha
     mov [savedEBP], ebp 
     mov [savedESP], esp
     mov bp, 0xFFF
@@ -31,8 +33,29 @@ chVBEMode:
     [bits 32]
     mov ebp, [savedEBP]
     mov esp, [savedESP]
-
+    popa
     mov eax, vbeRetInfo
+    ret
+
+setTextMode:
+    pusha
+    mov [savedEBP], ebp 
+    mov [savedESP], esp
+    mov bp, 0xFFF
+    mov sp, bp
+    call setRealMode
+    [bits 16]
+    ; Set the mode
+    mov ah, 0x00
+    mov al, 0x03
+    int 0x10
+    call setProtectedMode
+    [bits 32]
+    mov ebp, [savedEBP]
+    mov esp, [savedESP]
+
+    popa
+    mov eax, 0
     ret
 
 ; Switch between modes

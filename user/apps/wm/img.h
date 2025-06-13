@@ -37,3 +37,4 @@ void drawRectangle(int x, int y, int width, int height, uint8_t r, uint8_t g, ui
 void drawBorder(int x, int y, int width, int height, uint8_t r, uint8_t g, uint8_t b);
 void drawChar(uint8_t *PBFData, uint8_t index, int x, int y, uint8_t r, uint8_t g, uint8_t b);
 void renderStr(const char *str, uint8_t *fontData, int x, int y, uint8_t r, uint8_t g, uint8_t b);
+int memcmp(const void *str1, const void *str2, size_t count);

@@ -19,7 +19,7 @@ typedef struct {
     uint32_t esp;
     uint32_t ebp;
     uint32_t flags;
-} generalRegs;
+}__attribute__((packed)) generalRegs;
 
 typedef struct {
     uint32_t fromPID;
@@ -50,4 +50,4 @@ int getProcessIndexFromPID(uint32_t pid);
 extern int schedulerProcessAt;
 extern int processCount;
 int getNextProcessDry();
-int sendMessageToProcess(int pid, procMsg *msg);
+int sendMessageToProcess(uint32_t pid, procMsg *msg);

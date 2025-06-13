@@ -5,9 +5,11 @@
 #include "idt.h"
 #include "kmain.h"
 #include "serial.h"
+#include "commonSettings.h"
 
 vbeReturn VBEInfo;
 uint32_t ownerPID = 0;
+bool ownerSet = false;
 uint8_t currentGMode = VGA_MODE_TEXT;
 
 /*
@@ -173,13 +175,20 @@ void enableGraphics() {
     memcpy(&VBEInfo, returnVal, sizeof(vbeReturn));
     initGDT(); // Leaves the system in a half pmode state, so gotta redo these...
     initIDT();
+    // for(int y = 0; y < SCREEN_HEIGHT; ++y) {
+    //     for(int x = 0; x < SCREEN_WIDTH; ++x) {
+    //         uint8_t r = (x * 255) / SCREEN_WIDTH;
+    //         uint8_t g = (y * 255) / SCREEN_HEIGHT;
+    //         uint8_t b = ((x ^ y) * 255) / (SCREEN_WIDTH > SCREEN_HEIGHT ? SCREEN_WIDTH : SCREEN_HEIGHT);
+    //         putPixel(x, y, r, g, b);
+    //     }
+    // }
+}
 
-    for (int y = 0; y < SCREEN_HEIGHT; ++y) {
-        for (int x = 0; x < SCREEN_WIDTH; ++x) {
-            uint8_t r = (x * 255) / SCREEN_WIDTH;
-            uint8_t g = (y * 255) / SCREEN_HEIGHT;
-            uint8_t b = ((x ^ y) * 255) / (SCREEN_WIDTH > SCREEN_HEIGHT ? SCREEN_WIDTH : SCREEN_HEIGHT);
-            putPixel(x, y, r, g, b);
-        }
-    }
+void enableText() {
+    callKFEFunction(1, VBELoadAddr);
+    initGDT();
+    initIDT();
+    clearScr();
+    enableCursor(CURSOR_WIDTH, CURSOR_HEIGHT);
 }

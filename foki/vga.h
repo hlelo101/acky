@@ -67,7 +67,17 @@ typedef struct {
     uint16_t y;
 }__attribute__((packed)) lineInfo;
 
+typedef struct {
+    char signature[4]; // 'DREQ'
+    uint8_t type; // 0: Pixel; 1: Line; 2: Rectangle
+    union {
+        pixelInfo pinfo;
+        lineInfo linfo;
+    } info;
+}__attribute__((packed)) drawReq;
+
 extern uint32_t ownerPID;
+extern bool ownerSet;
 extern uint32_t VBEBufferAddr;
 extern vbeReturn VBEInfo;
 
@@ -91,3 +101,4 @@ void drawLine(int x0, int y0, int x1, int y1, uint8_t r, uint8_t g, uint8_t b);
 void enableGraphics();
 void putPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b);
 void getPixel(int x, int y, pixelInfo *info);
+void enableText();

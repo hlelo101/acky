@@ -22,6 +22,8 @@ global getPixel
 global enableGraphicsMode
 global _putPixel
 global _drawSquare
+global enableTextMode
+global _createWindow
 
 section .ackylib
 print:
@@ -150,13 +152,15 @@ reboot:
 sendMsg:
     push ebx
     push ecx
+    push edx
 
     mov eax, 11
-    mov ebx, 0
-    mov edx, [esp + 12]
-    mov ecx, [esp + 16]
+    xor ebx, ebx
+    mov edx, [esp + 16]
+    mov ecx, [esp + 20]
     int 0x40
 
+    pop edx
     pop ecx
     pop ebx
     ret
@@ -253,6 +257,27 @@ _drawSquare:
     int 0x40
 
     pop ecx
+    pop ebx
+    ret
+
+_createWindow:
+    push ebx
+
+    mov eax, 13
+    xor ebx, ebx
+    mov ecx, [esp + 8]
+    int 0x40
+
+    pop ebx
+    ret
+
+enableTextMode:
+    push ebx
+
+    mov eax, 13
+    mov ebx, 6
+    int 0x40
+
     pop ebx
     ret
 

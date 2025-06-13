@@ -60,7 +60,7 @@ void kmain(multiboot_info_t* mbd, uint32_t magic) {
     initSerial();
     serialSendString("Kernel initialization started. Version " VERSION "\n");
     initGDT();
-    enableCursor(9, 11);
+    enableCursor(CURSOR_WIDTH, CURSOR_HEIGHT);
     initPIT(1000);
     initIDT();
     initACPI();

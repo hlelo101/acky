@@ -1,10 +1,11 @@
 #include <acky.h>
 #include "img.h"
+#include "window.h"
 
 #define CLEAR() drawSquare(0, 0, 1024, 768, 18, 92, 182);
 #define WM_BG_COLOR 3
 
-uint8_t imageData[9000], mouseData[2048];
+uint8_t imageData[4096], mouseData[2048];
 pixelInfo mouseBG[12 * 19];
 
 int mouseX = 50, mouseY = 50;
@@ -82,38 +83,75 @@ void main() {
     drawSquare(0, 0, 22, 25, 189, 2, 2);
     parseBMP(imageData, 3, 3, 255, 255, 255);
     
-    // Character tests
+    // Font rendering
     loadFile("A:/PROGDAT/WM/FONT.PBF", imageData);
-    renderStr("Hello, World!", imageData, 50, 30, 0, 0, 0);
-    drawChar(imageData, 2, 60, 50, 33, 204, 155);
+    // renderStr("Hello, World!", imageData, 50, 30, 0, 0, 0);
+    // drawChar(imageData, 2, 60, 50, 33, 204, 155);
 
     // Mouse
     if(loadFile("A:/PROGDAT/WM/MOUSE.BMP", mouseData) == SRET_ERROR) { // A:/PROGDAT/WM/MOUSESMA.BMP
         serialPrint("An error occurred while loading \"A:/PROGDAT/MOUSE.BMP\"");
         while(1);
     }
+
+    // drawWindow(wmCreateWindow("Background", 0, 0, 1024, 786, false, 0));
+    drawWindow(wmCreateWindow("Test Window", 500, 500, 400, 200, true, 0));
+    drawWindow(wmCreateWindow("UwU", 300, 200,  200, 100, true, 0));
+
     // Save the initial background
-    for(int i = 0; i < 19; i++) {
-        for(int j = 0; j < 12; j++) {
-            mouseBG[i * 19 + j].x = mouseX + j;
-            mouseBG[i * 19 + j].y = mouseY + i;
-            getPixel(&mouseBG[i * 19 + j]);
+    for (int i = 0; i < 19; i++) {
+        for (int j = 0; j < 12; j++) {
+            int index = i * 12 + j;
+            mouseBG[index].x = mouseX + j;
+            mouseBG[index].y = mouseY + i;
+            getPixel(&mouseBG[index]);
         }
     }
     parseBMP(mouseData, mouseX, mouseY, 0, 0, 0);
 
+    spawnProcess("A:/PROGDAT/LAUNCHER.AEF");
     procMsg msg;
     mouseMovMsg *mouseMsg;
     while(1) {
         if(popMsg(&msg) == SRET_SUCCESS) {
-            mouseMsg = (mouseMovMsg *)msg.msg;
-            if(strcmp(mouseMsg->signature, "MOUMOV") == 0) {
+            if(memcmp(msg.msg, "MOUMOV", 6) == 0) {
+                mouseMsg = (mouseMovMsg *)msg.msg;
                 // Draw the mouse background
-                for(int i = 0; i < 19; i++) {
-                    for(int j = 0; j < 12; j++) {
-                        putPixel(mouseX + j, mouseY + i, mouseBG[i * 19 + j].r, mouseBG[i * 19 + j].g, mouseBG[i * 19 + j].b);
+                for (int i = 0; i < 19; i++) {
+                    for (int j = 0; j < 12; j++) {
+                        int index = i * 12 + j;
+                        putPixel(
+                            mouseX + j,
+                            mouseY + i,
+                            mouseBG[index].r,
+                            mouseBG[index].g,
+                            mouseBG[index].b
+                        );
                     }
                 }
+                uint8_t r = 0, g = 0;
+                if(mouseMsg->status & 0x01) {
+                    r = 255;
+                    checkPower();
+                    int hover = checkWindowHover(mouseX, mouseY);
+                    if(hover != -1) {
+                        windows[hover].x += mouseMsg->x;
+                        windows[hover].y -= mouseMsg->y;
+
+                        drawWindow(hover);
+                        if(windows[hover].processPID != 0) {
+                            procMsg msg;
+                            windowMov *mov = (windowMov *)msg.msg;
+                            memcpy(mov->signature, "WINMOV", 6); 
+                            mov->x = mouseMsg->x;
+                            mov->y = mouseMsg->y;
+                            sendMsg(windows[hover].processPID, &msg);
+                        }
+                    }
+                }
+
+                if(mouseMsg->status & 0x02) g = 255;
+
                 mouseX += mouseMsg->x;
                 mouseY -= mouseMsg->y;
                 if(mouseX < 0) mouseX = 0;
@@ -122,24 +160,41 @@ void main() {
                 if(mouseY > 768 - 1) mouseY = 768 - 1;
 
                 // Save the background
-                for(int i = 0; i < 19; i++) {
-                    for(int j = 0; j < 12; j++) {
-                        mouseBG[i * 19 + j].x = mouseX + j;
-                        mouseBG[i * 19 + j].y = mouseY + i;
-                        getPixel(&mouseBG[i * 19 + j]);
+                for (int i = 0; i < 19; i++) {
+                    for (int j = 0; j < 12; j++) {
+                        int index = i * 12 + j;
+                        mouseBG[index].x = mouseX + j;
+                        mouseBG[index].y = mouseY + i;
+                        getPixel(&mouseBG[index]);
                     }
                 }
 
-                uint8_t r = 0, g = 0;
-                if(mouseMsg->status & 0x01) {
-                    r = 255;
-                    checkPower();
-                }
-
-                if(mouseMsg->status & 0x02) g = 255; 
-                
                 // Draw the mouse
                 parseBMP(mouseData, mouseX, mouseY, r, g, 0);
+            } else if(memcmp(msg.msg, "DREQ", 4) == 0) {
+                drawReq *req = (drawReq *)msg.msg;
+                const int idx = getIndexFromPID(msg.fromPID);
+                if(idx != -1) {
+                    switch(req->type) {
+                        case 0: // Pixel
+                            if(req->info.pinfo.x > windows[idx].width || req->info.pinfo.y > windows[idx].height) break;
+                            putPixel(windows[idx].x + req->info.pinfo.x, windows[idx].y + req->info.pinfo.y, req->info.pinfo.r, 
+                                    req->info.pinfo.g, req->info.pinfo.b);
+                            break;
+                        case 1: // Line
+                            if(req->info.linfo.x > windows[idx].width || req->info.linfo.y > windows[idx].height ||
+                                req->info.linfo.firstPoint.x > windows[idx].width || req->info.linfo.firstPoint.y > windows[idx].height) break;
+                            drawLine(req->info.linfo.firstPoint.x + windows[idx].x, req->info.linfo.y + windows[idx].y,
+                                req->info.linfo.x + windows[idx].x, req->info.linfo.y + windows[idx].y,
+                                req->info.linfo.firstPoint.r, req->info.linfo.firstPoint.g, req->info.linfo.firstPoint.b);
+                        case 2: // Rectangle
+                            break;
+                    }
+                }
+            } else if(memcmp(msg.msg, "CWIN", 4) == 0) {
+                windowDesc *win = (windowDesc *)msg.msg;
+                char str[4];
+                drawWindow(wmCreateWindow(win->name, win->x, win->y, win->height, win->width, true, msg.fromPID));
             } else serialPrint("Unknown message received\n");
         }
     }

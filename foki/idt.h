@@ -34,6 +34,15 @@ typedef struct {
     uint32_t pid;
 } userProcInfo;
 
+typedef struct {
+    char signature[4]; // CWIN
+    uint16_t x;
+    uint16_t y;
+    uint16_t width;
+    uint16_t height;
+    char name[20];
+}__attribute__((packed)) windowDesc;
+
 enum syscalls {
     SC_PRINTCHAR,
     SC_GETUINPUT,
@@ -53,7 +62,7 @@ enum syscalls {
     SC_GETFILEINFO
 };
 
-extern bool setSti;
+extern bool runSti;
 
 void initIDT();
 void PICMap(int masterOffset, int slaveOffset, uint8_t masterMasks, uint8_t slaveMasks);

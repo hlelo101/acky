@@ -6,4 +6,4 @@ magic_break: enabled = 1
 com1: enabled=1, mode=file, dev=serial.txt
 clock: sync=realtime, time0=local
 keyboard: keymap=fr
-mouse: type=ps2, enabled=1
+mouse: type=ps2, enabled=0

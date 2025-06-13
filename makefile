@@ -13,7 +13,20 @@ OBJS =	ct/boot.o ct/kmain.o ct/vga.o ct/io.o ct/memory.o ct/gdt.o ct/idt.o ct/ps
 # Enabling KVM improves the accuracy of the emulation
 QEMUCMD = qemu-system-i386 -enable-kvm -drive file=acky.iso,format=raw,media=disk -m 124 -serial stdio -display gtk,zoom-to-fit=on -cpu host
 
-all: build userspace mkiso clean
+all:
+	@make acky || { \
+		printf "Build \033[0;31mfailed\033[0m\n"; \
+		exit 1; \
+	}
+	@printf "Build finished \033[0;32msuccessfully\033[0m\n"
+
+acky: checkTemp build userspace mkiso clean
+
+checkTemp:
+	@if [ -d ct ] || [ -f foki.bin ] || [ -d iso ]; then \
+		echo "Some temporary build files still exist. Please run 'make clean' and try again."; \
+		exit 1; \
+	fi
 
 build:
 	@echo "Building kernel..."
@@ -60,7 +73,7 @@ mkiso:
 	@echo "Hai! Test" > iso/test.txt
 	@mkdir iso/progdat/wm/
 	@cp user/apps/wm/media/* iso/progdat/wm/
-	@grub-mkrescue -o acky.iso iso
+	@grub-mkrescue -o acky.iso iso >/dev/null 2>&1
 
 userspace:
 	@echo "Building userspace..."
@@ -95,6 +108,9 @@ userspace:
 	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"Terminal Write\"" user/apps.c user/apps/twrite.c -o ct/twrite.elf
 	@$(OBJCOPY) $(OFLAGS) ct/twrite.elf ct/twrite.aef
 
+	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"Launcher\"" user/apps.c user/apps/launcher.c -o ct/launcher.elf
+	@$(OBJCOPY) $(OFLAGS) ct/launcher.elf ct/launcher.aef
+
 	@$(CC) $(USERCFLAGS) -DAEF_NAME="\"Window Manager\"" user/apps.c user/apps/wm/wm.c user/apps/wm/img.c\
 		user/apps/wm/window.c -o ct/wm.elf
 	@$(OBJCOPY) $(OFLAGS) ct/wm.elf ct/wm.aef
@@ -102,9 +118,9 @@ userspace:
 
 clean:
 	@echo "Cleaning up..."
-	@rm -r ct/
-	@rm foki.bin
-	@rm -r iso/
+	@if [ -d ct ]; then rm -r ct/; fi
+	@if [ -f foki.bin ]; then rm foki.bin; fi
+	@if [ -d iso ]; then rm -r iso/; fi	
 
 run:
 	$(QEMUCMD)

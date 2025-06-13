@@ -70,15 +70,19 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
     SET_DS(0x10);
     SET_ES(0x10);
     asm volatile("pop %eax");
-    uint32_t syscallReturn = SRET_SUCCESS;
 
     // Get the register contents
+    register uint32_t eax asm("eax");
+    register uint32_t ebx asm("ebx");
+    register uint32_t ecx asm("ecx");
+    register uint32_t edx asm("edx");
     generalRegs options;
-    asm volatile("mov %%eax, %0" : "=r"(options.eax));
-    asm volatile("mov %%ebx, %0" : "=r"(options.ebx));
-    asm volatile("mov %%ecx, %0" : "=r"(options.ecx));
-    asm volatile("mov %%edx, %0" : "=r"(options.edx));
+    options.eax = eax;
+    options.ebx = ebx;
+    options.ecx = ecx;
+    options.edx = edx;
 
+    uint32_t syscallReturn = SRET_SUCCESS;
     switch(options.eax) {
         case SC_PRINTCHAR: // Print character
             char c = (char)(options.ebx & 0xFF);
@@ -188,24 +192,18 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
             break;
         case SC_MSG: // EBX = 0: Send message, EBX = 1: Pop message; ECX = Struct address; EDX = Receiver PID
             if(options.ebx == 0) {
-                const int idx = getProcessIndexFromPID(options.edx);
-                if(idx == -1) {
-                    serialSendString("[SC_MSG]: Invalid receiver PID\n");
-                    syscallReturn = SRET_ERROR;
-                    break;
-                }
                 if(options.ecx > (uint32_t)processes[schedulerProcessAt].memSize) {
                     serialSendString("[SC_MSG]: Invalid memory access\n");
                     syscallReturn = SRET_ERROR;
                     break;
                 }
+                asm volatile("xchgw %%bx, %%bx" :: "a"(options.edx));
                 procMsg *msg = (procMsg *)(options.ecx + processes[schedulerProcessAt].memStart);
-                if(!sendMessageToProcess(processes[schedulerProcessAt].pid, msg)) {
+                if(!sendMessageToProcess(options.edx, msg)) {
                     serialSendString("[SC_MSG]: Failed to send message\n");
                     syscallReturn = SRET_ERROR;
                     break;
                 }
-                memcpy(&(processes[idx].IPCQueue[processes[idx].IPCQueueSize++]), msg, sizeof(procMsg));
             } else if(options.ebx == 1) {
                 if(options.ecx > (uint32_t)processes[schedulerProcessAt].memSize) {
                     serialSendString("[SC_MSG]: Invalid memory access\n");
@@ -236,53 +234,98 @@ __attribute__((naked)) void sysCall(struct interruptFrame *interruptFrame __attr
             break;
         case SC_GRAPHICS:
             // EBX:
-            // 0: Enable graphics mode; 1: Put pixel; 2: Draw line; 3: Get screen ownership; 4: Get pixel; 5: Draw square
+            // 0: Enable graphics mode; 1: Put pixel; 2: Draw line; 3: Get screen ownership; 4: Get pixel; 5: Draw square; 6: Enable text mode
             // ECX: Contains the address of the related struct
-            switch(options.ebx) {
-                case 0:
-                    runSti = false;
-                    enableGraphics();
-                    break;
-                case 1:
-                    if(options.ecx >= (uint32_t)processes[schedulerProcessAt].memSize) {
-                        syscallReturn = SRET_ERROR;
+            if(processes[schedulerProcessAt].pid == ownerPID || !ownerSet) {
+                switch(options.ebx) {
+                    case 0:
+                        runSti = false;
+                        enableGraphics();
+                        uint32_t processMemSizeWithStack = processes[schedulerProcessAt].memSize + (4096 * 4 + 1);
+                        setLDTEntry(0, processes[schedulerProcessAt].memStart, processMemSizeWithStack, 0xFA, 0xCF);
+                        setLDTEntry(1, processes[schedulerProcessAt].memStart, processMemSizeWithStack, 0xF2, 0xCF);
                         break;
-                    }
-                    pixelInfo *pixel = (pixelInfo *)(options.ecx + processes[schedulerProcessAt].memStart);
-                    putPixel(pixel->x, pixel->y, pixel->r, pixel->g, pixel->b);
-                    break;
-                case 2:
-                    if(options.ecx >= (uint32_t)processes[schedulerProcessAt].memSize) {
-                        syscallReturn = SRET_ERROR;
-                        break;
-                    }
-                    lineInfo *info = (lineInfo *)(options.ecx + processes[schedulerProcessAt].memStart);
-                    drawLine(info->firstPoint.x, info->firstPoint.y, info->x, info->y, info->firstPoint.r, info->firstPoint.g, info->firstPoint.b);
-                    break;
-                case 3:
-                    ownerPID = processes[schedulerProcessAt].pid;
-                    break;
-                case 4:
-                    if(options.ecx >= (uint32_t)processes[schedulerProcessAt].memSize) {
-                        syscallReturn = SRET_ERROR;
-                        break;
-                    }
-                    pixelInfo *pixel2 = (pixelInfo *)(options.ecx + processes[schedulerProcessAt].memStart);
-                    getPixel(pixel2->x, pixel2->y, pixel2);
-                    break;
-                case 5:
-                    if(options.ecx >= (uint32_t)processes[schedulerProcessAt].memSize) {
-                        syscallReturn = SRET_ERROR;
-                        break;
-                    }
-                    lineInfo *square = (lineInfo *)(options.ecx + processes[schedulerProcessAt].memStart);
-                    for(int i = 0; i < square->y; i++) {
-                        for(int j = 0; j < square->x; j++) {
-                            putPixel(square->firstPoint.x + j, square->firstPoint.y + i, square->firstPoint.r, square->firstPoint.g, square->firstPoint.b);
+                    case 1:
+                        if(options.ecx >= (uint32_t)processes[schedulerProcessAt].memSize) {
+                            syscallReturn = SRET_ERROR;
+                            break;
                         }
-                    }
+                        pixelInfo *pixel = (pixelInfo *)(options.ecx + processes[schedulerProcessAt].memStart);
+                        putPixel(pixel->x, pixel->y, pixel->r, pixel->g, pixel->b);
+                        break;
+                    case 2:
+                        if(options.ecx >= (uint32_t)processes[schedulerProcessAt].memSize) {
+                            syscallReturn = SRET_ERROR;
+                            break;
+                        }
+                        lineInfo *info = (lineInfo *)(options.ecx + processes[schedulerProcessAt].memStart);
+                        drawLine(info->firstPoint.x, info->firstPoint.y, info->x, info->y, info->firstPoint.r, info->firstPoint.g, info->firstPoint.b);
+                        break;
+                    case 3:
+                        ownerPID = processes[schedulerProcessAt].pid;
+                        ownerSet = true;
+                        break;
+                    case 4:
+                        if(options.ecx >= (uint32_t)processes[schedulerProcessAt].memSize) {
+                            syscallReturn = SRET_ERROR;
+                            break;
+                        }
+                        pixelInfo *pixel2 = (pixelInfo *)(options.ecx + processes[schedulerProcessAt].memStart);
+                        getPixel(pixel2->x, pixel2->y, pixel2);
+                        break;
+                    case 5:
+                        if(options.ecx >= (uint32_t)processes[schedulerProcessAt].memSize) {
+                            syscallReturn = SRET_ERROR;
+                            break;
+                        }
+                        lineInfo *square = (lineInfo *)(options.ecx + processes[schedulerProcessAt].memStart);
+                        for(int i = 0; i < square->y; i++) {
+                            for(int j = 0; j < square->x; j++) {
+                                putPixel(square->firstPoint.x + j, square->firstPoint.y + i, square->firstPoint.r, square->firstPoint.g, square->firstPoint.b);
+                            }
+                        }
+                        break;
+                    case 6:
+                        runSti = false;
+                        enableText();
+                        uint32_t processMemSizeWithStackT = processes[schedulerProcessAt].memSize + (4096 * 4 + 1);
+                        setLDTEntry(0, processes[schedulerProcessAt].memStart, processMemSizeWithStackT, 0xFA, 0xCF);
+                        setLDTEntry(1, processes[schedulerProcessAt].memStart, processMemSizeWithStackT, 0xF2, 0xCF);
+                        break;
+                }
+            } else {
+                if(options.ecx >= (uint32_t)processes[schedulerProcessAt].memSize) {
+                    syscallReturn = SRET_ERROR;
                     break;
-            } 
+                }
+                procMsg msg;
+                msg.fromPID = processes[schedulerProcessAt].pid;
+                switch(options.ebx) {
+                    case 0: // Create window
+                        windowDesc *win = (windowDesc *)msg.msg;
+                        memcpy(win, (void *)(options.ecx + processes[schedulerProcessAt].memStart), sizeof(windowDesc));
+                        memcpy(win->signature, "CWIN", 4);
+                        sendMessageToProcess(ownerPID, &msg);
+                        break;
+                    case 1: // Pixel
+                        drawReq *req = (drawReq *)msg.msg;
+                        memcpy(req->signature, "DREQ", 4);
+                        req->type = 0; 
+                        memcpy(&req->info.pinfo, (void *)(options.ecx + processes[schedulerProcessAt].memStart), sizeof(pixelInfo));
+                        sendMessageToProcess(ownerPID, &msg);
+                        break;
+                    case 2: // Line
+                        drawReq *lReq = (drawReq *)msg.msg;
+                        memcpy(lReq->signature, "DREQ", 4);
+                        lReq->type = 1;
+                        memcpy(&lReq->info.linfo, (void *)(options.ecx + processes[schedulerProcessAt].memStart), sizeof(lineInfo));
+                        sendMessageToProcess(ownerPID, &msg);
+                        break;
+                    default:
+                        syscallReturn = SRET_ERROR;
+                        break;
+                }
+            }
             break;
         case SC_LOADFILE: // Load file; EBX = Path, ECX = Buffer address
             if(options.ebx > (uint32_t)processes[schedulerProcessAt].memSize || options.ecx > (uint32_t)processes[schedulerProcessAt].memSize) {

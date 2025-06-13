@@ -65,7 +65,7 @@ void PITISR(struct interrupt_frame *interruptFrame) {
 
         interruptFrame->cs = 0x08;
         interruptFrame->ss = 0x10;
-        interruptFrame->sp = processes[nextProcessIndex].regs.ebp;
+        interruptFrame->sp = 0x8000;
     }
 
     tick++;

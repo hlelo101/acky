@@ -108,7 +108,7 @@ void kill(int pid) {
     processCount--;
 }
 
-int sendMessageToProcess(int pid, procMsg *msg) {
+int sendMessageToProcess(uint32_t pid, procMsg *msg) {
     const int idx = getProcessIndexFromPID(pid);
     if(idx == -1) return 0;
 

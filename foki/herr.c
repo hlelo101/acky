@@ -2,9 +2,12 @@
 #include "commonSettings.h"
 #include "utils.h"
 #include "process.h"
+#include "idt.h"
 
 void herr(const char *str) {
     CLI();
+    runSti = false;
+    enableText();
     asm volatile("push %eax\npush %edx\npush %ecx\npush %ebx\n");
     setColorAttribute(HERR_COLOR_ATTRIBUTE);
     clearScr();
